@@ -43,7 +43,9 @@
         .points-negative { color: #9c0006; background-color: #ffc7ce !important; }
         .invalid-team { background-color: #ffcccc !important; color: #990000; font-weight: bold; }
         .bg-denis { background-color: #cce0e6; } .bg-anton { background-color: #fce4d6; } .bg-valeriy { background-color: #fdf1cb; } .bg-ruslan { background-color: #e2b8b8; } .bg-nastya { background-color: #e6a8a8; }
+        .bg-gitai { background-color: #e1bee7; }
         .bg-denis-cell { background-color: #e6f2f5; } .bg-anton-cell { background-color: #fef4ee; } .bg-valeriy-cell { background-color: #fff9e6; } .bg-ruslan-cell { background-color: #f4e1e1; } .bg-nastya-cell { background-color: #f5d6d6; }
+        .bg-gitai-cell { background-color: #f3e5f5; }
         tr.match-row.row-archived-past, tr.match-row.row-archived-future { display: none; }
         #table-body.show-past tr.match-row.row-archived-past { display: table-row; opacity: 0.55; }
         #table-body.show-past tr.match-row.row-archived-past input, #table-body.show-past tr.match-row.row-archived-past select { color: #777; }
@@ -61,6 +63,7 @@
         .leaderboard-table th, .leaderboard-table td, .rules-table th, .rules-table td { border: 1px solid #c0c0c0; padding: 12px 18px; text-align: center; font-size: 13px; }
         .leaderboard-table th, .rules-table th { background-color: #f2f2f2; font-weight: bold; }
         .place-1 { background-color: #d9ead3; } .place-2 { background-color: #fce5cd; } .place-3 { background-color: #d0e0e3; }
+        .place-ai { background-color: #f3e5f5; }
         .icon-cell { font-size: 22px; width: 45px; }
         .total-score { font-weight: bold; font-size: 15px; }
         .rules-table td:first-child { font-weight: bold; width: 100px; background-color: #fafafa; }
@@ -293,10 +296,12 @@
                             <th colspan="3" class="bg-valeriy">Валерий<br><span id="pct-valeriy" style="font-size: 11px; color: #555;">0,0%</span></th>
                             <th colspan="3" class="bg-ruslan">Руслан<br><span id="pct-ruslan" style="font-size: 11px; color: #555;">0,0%</span></th>
                             <th colspan="3" class="bg-nastya">Настя<br><span id="pct-nastya" style="font-size: 11px; color: #555;">0,0%</span></th>
+                            <th colspan="3" class="bg-gitai">🤖 GIT-hub AI<br><span id="pct-gitai" style="font-size: 11px; color: #555;">0,0%</span></th>
                             <th rowspan="2" style="width: 30px;"></th>
                         </tr>
                         <tr>
                             <th>Хоз</th><th>Гост</th><th>Тип</th><th>Хоз</th><th>Гост</th>
+                            <th>Голы<br>хоз</th><th>Голы<br>гост</th><th>Очки</th>
                             <th>Голы<br>хоз</th><th>Голы<br>гост</th><th>Очки</th>
                             <th>Голы<br>хоз</th><th>Голы<br>гост</th><th>Очки</th>
                             <th>Голы<br>хоз</th><th>Голы<br>гост</th><th>Очки</th>
@@ -375,6 +380,7 @@
                             <tr class="place-3"><td>Коморин Валерий</td><td><span id="total-valeriy" class="total-score">0</span><span id="breakdown-valeriy" class="bonus-breakdown"></span></td><td>3 место</td><td class="icon-cell">💐</td></tr>
                             <tr class="place-3"><td>Коморин Руслан</td><td><span id="total-ruslan" class="total-score">0</span><span id="breakdown-ruslan" class="bonus-breakdown"></span></td><td>3 место</td><td class="icon-cell">💐</td></tr>
                             <tr><td>Коморина Анастасия</td><td><span id="total-nastya" class="total-score">0</span><span id="breakdown-nastya" class="bonus-breakdown"></span></td><td></td><td class="icon-cell">🍓</td></tr>
+                            <tr class="place-ai"><td>🤖 GIT-hub AI</td><td><span id="total-gitai" class="total-score">0</span><span id="breakdown-gitai" class="bonus-breakdown"></span></td><td></td><td class="icon-cell">🤖</td></tr>
                         </tbody>
                     </table>
                     <div class="rules-note" style="text-align:left; padding:8px 15px; font-size:11px; color:#666;">
@@ -499,12 +505,32 @@
         "Нефтехимик", "Сибирь", "Трактор"
     ];
 
-    const STORAGE_KEY = 'khk_predictions_data_v11';
-    const PLAYOFF_STORAGE_KEY = 'khk_playoff_data_v3';
+    // ======== НОРМАЛИЗАЦИЯ ИМЁН КОМАНД (устранение дублей) ========
+    const teamAliases = {
+        'ХК Динамо-москва': 'ХК Динамо-Москва',
+        'ХК динамо-москва': 'ХК Динамо-Москва',
+        'хк динамо-москва': 'ХК Динамо-Москва',
+        'Динамо Мн': 'Динамо-Минск',
+        'динамо мн': 'Динамо-Минск',
+        'Металлург Мг': 'Металлург',
+        'металлург мг': 'Металлург',
+        'ХК Сочи': 'Сочи',
+        'хк сочи': 'Сочи',
+        'Ак Bars': 'Ак Барс',
+        'ак bars': 'Ак Барс'
+    };
+    function normalizeTeamName(name) {
+        if (name === null || name === undefined) return '';
+        const trimmed = String(name).trim();
+        return teamAliases[trimmed] || trimmed;
+    }
+
+    const STORAGE_KEY = 'khk_predictions_data_v12';
+    const PLAYOFF_STORAGE_KEY = 'khk_playoff_data_v4';
 
     let showPastMatches = false;
     let showFutureMatches = false;
-    let mainForecastTotals = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+    let mainForecastTotals = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, gitai: 0 };
 
     function parseDateToObj(str) {
         if (!str) return null;
@@ -620,8 +646,8 @@
             return stats[name];
         }
         document.querySelectorAll('#table-body .match-row').forEach(row => {
-            const home = (row.querySelectorAll('.input-team')[0].value || '').trim();
-            const away = (row.querySelectorAll('.input-team')[1].value || '').trim();
+            const home = normalizeTeamName(row.querySelectorAll('.input-team')[0].value);
+            const away = normalizeTeamName(row.querySelectorAll('.input-team')[1].value);
             const fh = row.querySelectorAll('.input-score')[0].value;
             const fa = row.querySelectorAll('.input-score')[1].value;
             const type = row.querySelector('.input-type').value;
@@ -663,8 +689,8 @@
     function updateCompareSelects() {
         const set = new Set();
         document.querySelectorAll('#table-body .match-row').forEach(row => {
-            const h = (row.querySelectorAll('.input-team')[0].value || '').trim();
-            const a = (row.querySelectorAll('.input-team')[1].value || '').trim();
+            const h = normalizeTeamName(row.querySelectorAll('.input-team')[0].value);
+            const a = normalizeTeamName(row.querySelectorAll('.input-team')[1].value);
             if (h) set.add(h);
             if (a) set.add(a);
         });
@@ -683,8 +709,8 @@
     function collectTeamMatches(teamName) {
         const matches = [];
         document.querySelectorAll('#table-body .match-row').forEach(row => {
-            const home = (row.querySelectorAll('.input-team')[0].value || '').trim();
-            const away = (row.querySelectorAll('.input-team')[1].value || '').trim();
+            const home = normalizeTeamName(row.querySelectorAll('.input-team')[0].value);
+            const away = normalizeTeamName(row.querySelectorAll('.input-team')[1].value);
             if (home !== teamName && away !== teamName) return;
             const fh = row.querySelectorAll('.input-score')[0].value;
             const fa = row.querySelectorAll('.input-score')[1].value;
@@ -881,8 +907,8 @@
         const currentValue = select.value;
         const upcomingMatches = [];
         document.querySelectorAll('#table-body .match-row').forEach((row, idx) => {
-            const home = (row.querySelectorAll('.input-team')[0].value || '').trim();
-            const away = (row.querySelectorAll('.input-team')[1].value || '').trim();
+            const home = normalizeTeamName(row.querySelectorAll('.input-team')[0].value);
+            const away = normalizeTeamName(row.querySelectorAll('.input-team')[1].value);
             const fh = row.querySelectorAll('.input-score')[0].value;
             const fa = row.querySelectorAll('.input-score')[1].value;
             const date = (row.querySelector('.input-date').value || '').trim();
@@ -968,9 +994,9 @@
     }
 
     let analyticsChart = null;
-    const chartPlayers = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
-    const chartPlayerNames = { denis: 'Денис', anton: 'Антон', valeriy: 'Валерий', ruslan: 'Руслан', nastya: 'Настя' };
-    const chartColors = { denis: '#2196F3', anton: '#F44336', valeriy: '#FFC107', ruslan: '#4CAF50', nastya: '#FF9800' };
+    const chartPlayers = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya', 'gitai'];
+    const chartPlayerNames = { denis: 'Денис', anton: 'Антон', valeriy: 'Валерий', ruslan: 'Руслан', nastya: 'Настя', gitai: '🤖 GIT-hub AI' };
+    const chartColors = { denis: '#2196F3', anton: '#F44336', valeriy: '#FFC107', ruslan: '#4CAF50', nastya: '#FF9800', gitai: '#9C27B0' };
 
     function buildAnalyticsData() {
         const rows = document.querySelectorAll('#table-body .match-row');
@@ -1005,8 +1031,8 @@
             return da - db;
         });
         const labels = [];
-        const cumulative = { denis: [], anton: [], valeriy: [], ruslan: [], nastya: [] };
-        const sums = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+        const cumulative = { denis: [], anton: [], valeriy: [], ruslan: [], nastya: [], gitai: [] };
+        const sums = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, gitai: 0 };
         completedMatches.forEach(match => {
             labels.push(`${match.date}  ${match.home} – ${match.away}`);
             chartPlayers.forEach(p => {
@@ -1079,8 +1105,8 @@
     }
 
     // ======== НАШИ РЕКОРДСМЕНЫ ========
-    const recordsPlayers = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
-    const recordsNames = { denis: 'Денис', anton: 'Антон', valeriy: 'Валерий', ruslan: 'Руслан', nastya: 'Настя' };
+    const recordsPlayers = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya', 'gitai'];
+    const recordsNames = { denis: 'Денис', anton: 'Антон', valeriy: 'Валерий', ruslan: 'Руслан', nastya: 'Настя', gitai: '🤖 GIT-hub AI' };
 
     function collectCompletedMatchesWithPoints() {
         const matches = [];
@@ -1089,8 +1115,8 @@
             const factOsAway = row.querySelector('.fact-os-away').value;
             if (factOsHome === '' || factOsAway === '') return;
             const date = (row.querySelector('.input-date').value || '').trim();
-            const home = (row.querySelectorAll('.input-team')[0].value || '').trim();
-            const away = (row.querySelectorAll('.input-team')[1].value || '').trim();
+            const home = normalizeTeamName(row.querySelectorAll('.input-team')[0].value);
+            const away = normalizeTeamName(row.querySelectorAll('.input-team')[1].value);
             const dateObj = parseDateToObj(date);
             if (!dateObj) return;
             const matchData = {
@@ -1194,7 +1220,7 @@
         const avgHome = (totalHomeGoals / matches.length).toFixed(1);
         const avgAway = (totalAwayGoals / matches.length).toFixed(1);
 
-        const dayPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+        const dayPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, gitai: 0 };
         matches.forEach(m => {
             recordsPlayers.forEach(p => {
                 const v = m.points[p];
@@ -1249,7 +1275,7 @@
             return;
         }
 
-        const weekPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+        const weekPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, gitai: 0 };
         matches.forEach(m => {
             recordsPlayers.forEach(p => {
                 const v = m.points[p];
@@ -1299,7 +1325,7 @@
             return;
         }
 
-        const monthPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+        const monthPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, gitai: 0 };
         matches.forEach(m => {
             recordsPlayers.forEach(p => {
                 const v = m.points[p];
@@ -1354,7 +1380,7 @@
         let worstRecord = { player: null, date: null, points: Infinity };
 
         Object.entries(byDay).forEach(([date, matches]) => {
-            const dayPts = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+            const dayPts = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, gitai: 0 };
             matches.forEach(m => {
                 recordsPlayers.forEach(p => {
                     const v = m.points[p];
@@ -1412,35 +1438,35 @@
     // ======== ПЛЕЙ-ОФФ ========
     const westTeams = ['Лада', 'Динамо-Минск', 'Драконы', 'Локомотив', 'Северсталь', 'СКА', 'Сочи', 'Спартак', 'Торпедо', 'ХК Динамо-Москва', 'ЦСКА'];
     const eastTeams = ['Авангард', 'Автомобилист', 'Адмирал', 'Ак Барс', 'Амур', 'Барыс', 'Салават Юлаев', 'Металлург', 'Нефтехимик', 'Сибирь', 'Трактор'];
-    const players = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
-    const playerNames = { denis: 'Денис', anton: 'Антон', valeriy: 'Валерий', ruslan: 'Руслан', nastya: 'Настя' };
+    const players = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya', 'gitai'];
+    const playerNames = { denis: 'Денис', anton: 'Антон', valeriy: 'Валерий', ruslan: 'Руслан', nastya: 'Настя', gitai: '🤖 GIT-hub AI' };
 
     const defaultPlayoffData = {
         west: [
-            { team: 'Лада', fact: '', denis: 'не пройдет', anton: 'не пройдет', valeriy: 'не пройдет', ruslan: 'не пройдет', nastya: 'не пройдет' },
-            { team: 'Динамо-Минск', fact: '', denis: '5', anton: '6', valeriy: '3', ruslan: '5', nastya: '6' },
-            { team: 'Драконы', fact: '', denis: '8', anton: '7', valeriy: 'не пройдет', ruslan: '8', nastya: '8' },
-            { team: 'Локомотив', fact: '', denis: '2', anton: '2', valeriy: '1', ruslan: '1', nastya: '1' },
-            { team: 'Северсталь', fact: '', denis: '7', anton: 'не пройдет', valeriy: '8', ruslan: '7', nastya: '7' },
-            { team: 'СКА', fact: '', denis: '3', anton: '1', valeriy: '4', ruslan: '3', nastya: '2' },
-            { team: 'Сочи', fact: '', denis: 'не пройдет', anton: 'не пройдет', valeriy: 'не пройдет', ruslan: 'не пройдет', nastya: 'не пройдет' },
-            { team: 'Спартак', fact: '', denis: '6', anton: '5', valeriy: '7', ruslan: '6', nastya: '4' },
-            { team: 'Торпедо', fact: '', denis: 'не пройдет', anton: '8', valeriy: '6', ruslan: 'не пройдет', nastya: 'не пройдет' },
-            { team: 'ХК Динамо-Москва', fact: '', denis: '4', anton: '4', valeriy: '5', ruslan: '4', nastya: '3' },
-            { team: 'ЦСКА', fact: '', denis: '1', anton: '3', valeriy: '2', ruslan: '2', nastya: '5' }
+            { team: 'Лада', fact: '', denis: 'не пройдет', anton: 'не пройдет', valeriy: 'не пройдет', ruslan: 'не пройдет', nastya: 'не пройдет', gitai: '' },
+            { team: 'Динамо-Минск', fact: '', denis: '5', anton: '6', valeriy: '3', ruslan: '5', nastya: '6', gitai: '' },
+            { team: 'Драконы', fact: '', denis: '8', anton: '7', valeriy: 'не пройдет', ruslan: '8', nastya: '8', gitai: '' },
+            { team: 'Локомотив', fact: '', denis: '2', anton: '2', valeriy: '1', ruslan: '1', nastya: '1', gitai: '' },
+            { team: 'Северсталь', fact: '', denis: '7', anton: 'не пройдет', valeriy: '8', ruslan: '7', nastya: '7', gitai: '' },
+            { team: 'СКА', fact: '', denis: '3', anton: '1', valeriy: '4', ruslan: '3', nastya: '2', gitai: '' },
+            { team: 'Сочи', fact: '', denis: 'не пройдет', anton: 'не пройдет', valeriy: 'не пройдет', ruslan: 'не пройдет', nastya: 'не пройдет', gitai: '' },
+            { team: 'Спартак', fact: '', denis: '6', anton: '5', valeriy: '7', ruslan: '6', nastya: '4', gitai: '' },
+            { team: 'Торпедо', fact: '', denis: 'не пройдет', anton: '8', valeriy: '6', ruslan: 'не пройдет', nastya: 'не пройдет', gitai: '' },
+            { team: 'ХК Динамо-Москва', fact: '', denis: '4', anton: '4', valeriy: '5', ruslan: '4', nastya: '3', gitai: '' },
+            { team: 'ЦСКА', fact: '', denis: '1', anton: '3', valeriy: '2', ruslan: '2', nastya: '5', gitai: '' }
         ],
         east: [
-            { team: 'Авангард', fact: '', denis: '2', anton: '2', valeriy: '1', ruslan: '1', nastya: '3' },
-            { team: 'Автомобилист', fact: '', denis: '5', anton: '3', valeriy: '6', ruslan: '3', nastya: '4' },
-            { team: 'Адмирал', fact: '', denis: 'не пройдет', anton: 'не пройдет', valeriy: 'не пройдет', ruslan: 'не пройдет', nastya: 'не пройдет' },
-            { team: 'Ак Барс', fact: '', denis: '1', anton: '4', valeriy: '3', ruslan: '4', nastya: '7' },
-            { team: 'Амур', fact: '', denis: '7', anton: 'не пройдет', valeriy: '8', ruslan: '7', nastya: 'не пройдет' },
-            { team: 'Барыс', fact: '', denis: 'не пройдет', anton: 'не пройдет', valeriy: 'не пройдет', ruslan: 'не пройдет', nastya: 'не пройдет' },
-            { team: 'Салават Юлаев', fact: '', denis: '4', anton: '6', valeriy: '4', ruslan: '5', nastya: '2' },
-            { team: 'Металлург', fact: '', denis: '3', anton: '1', valeriy: '2', ruslan: '2', nastya: '1' },
-            { team: 'Нефтехимик', fact: '', denis: 'не пройдет', anton: '8', valeriy: 'не пройдет', ruslan: 'не пройдет', nastya: '8' },
-            { team: 'Сибирь', fact: '', denis: '8', anton: '7', valeriy: '7', ruslan: '8', nastya: '6' },
-            { team: 'Трактор', fact: '', denis: '6', anton: '5', valeriy: '5', ruslan: '6', nastya: '5' }
+            { team: 'Авангард', fact: '', denis: '2', anton: '2', valeriy: '1', ruslan: '1', nastya: '3', gitai: '' },
+            { team: 'Автомобилист', fact: '', denis: '5', anton: '3', valeriy: '6', ruslan: '3', nastya: '4', gitai: '' },
+            { team: 'Адмирал', fact: '', denis: 'не пройдет', anton: 'не пройдет', valeriy: 'не пройдет', ruslan: 'не пройдет', nastya: 'не пройдет', gitai: '' },
+            { team: 'Ак Барс', fact: '', denis: '1', anton: '4', valeriy: '3', ruslan: '4', nastya: '7', gitai: '' },
+            { team: 'Амур', fact: '', denis: '7', anton: 'не пройдет', valeriy: '8', ruslan: '7', nastya: 'не пройдет', gitai: '' },
+            { team: 'Барыс', fact: '', denis: 'не пройдет', anton: 'не пройдет', valeriy: 'не пройдет', ruslan: 'не пройдет', nastya: 'не пройдет', gitai: '' },
+            { team: 'Салават Юлаев', fact: '', denis: '4', anton: '6', valeriy: '4', ruslan: '5', nastya: '2', gitai: '' },
+            { team: 'Металлург', fact: '', denis: '3', anton: '1', valeriy: '2', ruslan: '2', nastya: '1', gitai: '' },
+            { team: 'Нефтехимик', fact: '', denis: 'не пройдет', anton: '8', valeriy: 'не пройдет', ruslan: 'не пройдет', nastya: '8', gitai: '' },
+            { team: 'Сибирь', fact: '', denis: '8', anton: '7', valeriy: '7', ruslan: '8', nastya: '6', gitai: '' },
+            { team: 'Трактор', fact: '', denis: '6', anton: '5', valeriy: '5', ruslan: '6', nastya: '5', gitai: '' }
         ]
     };
 
@@ -1460,7 +1486,7 @@
         localStorage.setItem(PLAYOFF_STORAGE_KEY, JSON.stringify(data));
     }
     function buildPlayoffRow(conf, team, index, data) {
-        const d = data || { team: team, fact: '', denis: '', anton: '', valeriy: '', ruslan: '', nastya: '' };
+        const d = data || { team: team, fact: '', denis: '', anton: '', valeriy: '', ruslan: '', nastya: '', gitai: '' };
         const opts = (selected) => `
             <option value="">--</option>
             <option value="пройдет" ${selected === 'пройдет' ? 'selected' : ''}>пройдет</option>
@@ -1515,7 +1541,7 @@
     }
 
     function getPlayoffBonusTotals() {
-        const totals = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+        const totals = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, gitai: 0 };
         document.querySelectorAll('#playoff-table .playoff-row').forEach(row => {
             const factSel = row.querySelector('.fact-select');
             if (!factSel) return;
@@ -1548,12 +1574,12 @@
         const container = document.getElementById('playoff-container');
         const savedData = getPlayoffData();
         let html = '<table class="playoff-table" id="playoff-table"><thead><tr><th>#</th><th>Команда</th><th>Факт</th>' + players.map(p => `<th>${playerNames[p]}</th>`).join('') + '</tr></thead><tbody>';
-        html += `<tr class="conference-header"><td colspan="8">🏒 Западная конференция</td></tr>`;
+        html += `<tr class="conference-header"><td colspan="9">🏒 Западная конференция</td></tr>`;
         westTeams.forEach((team, i) => {
             const data = savedData && savedData.west ? savedData.west.find(x => x.team === team) : null;
             html += buildPlayoffRow('west', team, i, data);
         });
-        html += `<tr class="conference-header"><td colspan="8">🏒 Восточная конференция</td></tr>`;
+        html += `<tr class="conference-header"><td colspan="9">🏒 Восточная конференция</td></tr>`;
         eastTeams.forEach((team, i) => {
             const data = savedData && savedData.east ? savedData.east.find(x => x.team === team) : null;
             html += buildPlayoffRow('east', team, i, data);
@@ -1587,7 +1613,7 @@
         });
     }
 
-    // ======== БАЗА МАТЧЕЙ ========
+    // ======== БАЗА МАТЧЕЙ (исправлены опечатки, единые имена команд) ========
     const embeddedData = `05.09.2026;Локомотив;Трактор;5;1;осн. время;5;1;4;1;2;1;5;1;4;1;3;1
 05.09.2026;Спартак;Торпедо;0;1;осн. время;0;1;3;3;3;2;3;4;5;4;4;2
 05.09.2026;Северсталь;Салават Юлаев;2;3;осн. время;2;3;3;1;2;4;5;2;1;3;1;3
@@ -1609,7 +1635,7 @@
 08.09.2026;Локомотив;Драконы;3;1;осн. время;3;1;4;1;5;1;6;0;4;1;4;1
 09.09.2026;Барыс;Салават Юлаев;8;6;осн. время;8;6;2;3;1;4;2;5;2;4;1;3
 09.09.2026;Ак Барс;Трактор;2;1;осн. время;2;1;2;4;3;2;3;3;4;1;3;1
-09.09.2026;ХК Динамо-москва;Адмирал;2;1;БУЛ;1;1;4;1;5;2;5;1;3;0;3;1
+09.09.2026;ХК Динамо-Москва;Адмирал;2;1;БУЛ;1;1;4;1;5;2;5;1;3;0;3;1
 09.09.2026;СКА;Лада;2;1;ОТ;1;1;4;2;5;3;4;2;5;2;5;2
 09.09.2026;ЦСКА;Торпедо;3;0;осн. время;3;0;4;1;4;2;2;3;2;2;2;3
 10.09.2026;Сибирь;Амур;2;0;осн. время;2;0;3;1;2;3;1;4;2;4;3;1
@@ -1622,7 +1648,7 @@
 11.09.2026;Нефтехимик;Автомобилист;3;1;осн. время;3;1;1;4;2;4;1;3;2;3;2;4
 11.09.2026;ЦСКА;Адмирал;2;4;осн. время;2;4;4;1;3;1;4;1;4;1;4;1
 12.09.2026;Барыс;Амур;1;3;осн. время;1;3;4;3;4;2;4;1;5;3;4;2
-12.09.2026;ХК Динамо-москва;Динамо-Минск;3;2;БУЛ;2;2;4;1;3;2;3;3;2;2;2;1
+12.09.2026;ХК Динамо-Москва;Динамо-Минск;3;2;БУЛ;2;2;4;1;3;2;3;3;2;2;2;1
 12.09.2026;Сочи;СКА;0;1;осн. время;0;1;2;5;1;4;2;3;1;5;1;4
 12.09.2026;Спартак;Северсталь;8;0;осн. время;8;0;2;2;3;1;4;3;3;1;3;2
 13.09.2026;Сибирь;Автомобилист;2;5;осн. время;2;5;1;4;2;3;1;3;1;3;1;3
@@ -1661,7 +1687,7 @@
 21.09.2026;Ак Барс;Лада;3;2;ОТ;2;2;5;2;4;3;5;1;5;0;4;1
 22.09.2026;Драконы;Автомобилист;3;2;осн. время;3;2;3;2;2;4;3;3;1;4;2;3
 22.09.2026;Торпедо;Авангард;5;1;осн. время;5;1;2;4;3;2;3;3;2;5;3;1
-22.09.2026;ХК Динамо-москва;Барыс;1;4;осн. время;1;4;4;2;4;2;4;1;3;2;4;2
+22.09.2026;ХК Динамо-Москва;Барыс;1;4;осн. время;1;4;4;2;4;2;4;1;3;2;4;2
 23.09.2026;Амур;ЦСКА;0;2;осн. время;0;2;2;4;1;3;2;2;2;3;1;3
 23.09.2026;Адмирал;Локомотив;1;2;осн. время;1;2;2;2;0;3;3;1;1;5;1;2
 23.09.2026;Салават Юлаев;Металлург;3;4;осн. время;3;4;2;4;2;2;4;2;2;4;4;3
@@ -1669,87 +1695,87 @@
 24.09.2026;Сибирь;Ак Барс;2;3;БУЛ;2;2;3;2;2;4;3;1;1;5;2;3
 24.09.2026;Торпедо;Сочи;3;0;осн. время;3;0;4;2;4;2;7;0;6;2;4;2
 24.09.2026;Северсталь;Автомобилист;5;2;осн. время;5;2;3;3;2;3;1;4;1;3;2;4
-24.09.2026;ХК Динамо-москва;Динамо-Минск;4;3;осн. время;3;3;5;2;4;3;3;3;2;2;3;2
-24.09.20.26;Спартак;Авангард;1;2;ОТ;;;;;3;1;3;1;;;;;;;;;;;
+24.09.2026;ХК Динамо-Москва;Динамо-Минск;4;3;осн. время;3;3;5;2;4;3;3;3;2;2;3;2
+24.09.2026;Спартак;Авангард;1;2;ОТ;;;;;3;1;3;1;;;;;;;;;;;
 25.09.2026;Амур;Локомотив;3;1;осн. время;3;1;1;4;1;3;2;4;1;4;1;3
 25.09.2026;Трактор;СКА;3;4;осн. время;3;4;3;2;2;3;4;2;2;5;2;4
 25.09.2026;Лада;ЦСКА;0;5;осн. время;0;5;2;4;1;4;3;2;1;4;1;3
 26.09.2026;Барыс;Нефтехимик;3;6;осн. время;3;6;5;2;4;3;5;3;2;3;4;2
 26.09.2026;Металлург;Ак Барс;2;1;осн. время;2;1;3;1;4;2;4;1;5;2;4;2
-26.09.2026;ХК Динамо-москва;Салават Юлаев;1;3;осн. время;1;3;4;2;3;2;3;3;2;3;3;2
+26.09.2026;ХК Динамо-Москва;Салават Юлаев;1;3;осн. время;1;3;4;2;3;2;3;3;2;3;3;2
 26.09.2026;Спартак;Автомобилист;2;4;осн. время;2;4;2;4;4;1;4;2;3;3;3;1
 26.09.2026;Драконы;Динамо-Минск;2;1;осн. время;2;1;3;2;2;4;1;5;2;2;2;4
 26.09.2026;Северсталь;Сочи;3;1;осн. время;3;1;4;1;3;1;6;0;5;1;4;1
 27.09.2026;Адмирал;Нефтехимик;3;5;осн. время;3;5;2;2;3;2;2;3;4;2;3;2
 27.09.2026;Сибирь;Локомотив;1;2;осн. время;1;2;1;4;1;3;1;3;0;5;1;3
 27.09.2026;Барыс;СКА;3;5;осн. время;3;5;2;4;2;5;3;2;3;6;2;4
-28.09.2026;Авангард;Металлург Мг;1;5;осн. время;1;5;3;2;2;4;3;4;4;2;2;4
-28.09.2026;Динамо Мн;Лада;5;4;осн. время;5;4;3;1;4;1;5;2;3;1;4;2
-28.09.2026;Драконы;ХК Сочи;4;1;осн. время;4;1;4;3;5;2;5;1;4;1;4;2
-28.09.2026;ХК Динамо-москва;Трактор;1;2;ОТ;1;1;4;1;2;3;3;2;2;2;3;1
+28.09.2026;Авангард;Металлург;1;5;осн. время;1;5;3;2;2;4;3;4;4;2;2;4
+28.09.2026;Динамо-Минск;Лада;5;4;осн. время;5;4;3;1;4;1;5;2;3;1;4;2
+28.09.2026;Драконы;Сочи;4;1;осн. время;4;1;4;3;5;2;5;1;4;1;4;2
+28.09.2026;ХК Динамо-Москва;Трактор;1;2;ОТ;1;1;4;1;2;3;3;2;2;2;3;1
 28.09.2026;Торпедо;Салават Юлаев;0;3;осн. время;0;3;2;3;3;2;2;4;4;3;3;2
 29.09.2026;Амур;Нефтехимик;1;0;осн. время;1;0;2;4;3;2;4;2;4;2;3;1
 29.09.2026;ЦСКА;СКА;6;5;осн. время;6;5;3;3;4;2;2;5;2;2;3;2
 30.09.2026;Автомобилист;Лада;3;1;осн. время;3;1;4;2;3;1;5;3;5;1;4;2
 30.09.2026;Ак Барс;Барыс;4;1;осн. время;4;1;2;1;4;2;5;2;3;3;3;2
 30.09.2026;Спартак;Трактор;2;4;осн. время;2;4;5;2;3;2;3;3;4;2;3;2
-30.09.2026;ХК Сочи;Салават Юлаев;6;3;осн. время;6;3;2;3;1;5;0;4;1;3;1;4
+30.09.2026;Сочи;Салават Юлаев;6;3;осн. время;6;3;2;3;1;5;0;4;1;3;1;4
 30.09.2026;Локомотив;Сибирь;3;1;осн. время;3;1;5;1;3;0;6;0;5;0;3;1
-30.09.2026;Драконы;Металлург Мг;4;1;осн. время;4;1;3;2;1;4;2;4;2;6;2;3
+30.09.2026;Драконы;Металлург;4;1;осн. время;4;1;3;2;1;4;2;4;2;6;2;3
 01.10.2026;Северсталь;Адмирал;3;4;БУЛ;3;3;2;4;3;1;5;2;4;2;3;1
-01.10.2026;Динамо Мн;ЦСКА;1;4;осн. время;1;4;2;4;2;3;3;2;1;3;2;4
-01.10.2026;ХК Динамо-москва;Торпедо;1;3;осн. время;1;3;5;2;3;2;4;1;2;2;1;3
+01.10.2026;Динамо-Минск;ЦСКА;1;4;осн. время;1;4;2;4;2;3;3;2;1;3;2;4
+01.10.2026;ХК Динамо-Москва;Торпедо;1;3;осн. время;1;3;5;2;3;2;4;1;2;2;1;3
 02.10.2026;Авангард;Лада;4;1;осн. время;4;1;3;1;4;2;5;2;6;1;4;1
 02.10.2026;Салават Юлаев;Сибирь;2;4;осн. время;2;4;4;1;4;2;5;0;4;2;3;1
 02.10.2026;Автомобилист;Амур;3;0;осн. время;3;0;2;2;3;1;4;1;1;3;2;1
 02.10.2026;Ак Барс;Трактор;2;3;осн. время;2;3;2;4;2;3;2;2;3;2;3;1
 02.10.2026;Нефтехимик;Барыс;4;5;ОТ;4;4;4;2;4;3;2;4;5;3;3;2
-02.10.2026;Спартак;Металлург Мг;0;2;осн. время;0;2;1;3;3;3;1;5;2;2;3;4
+02.10.2026;Спартак;Металлург;0;2;осн. время;0;2;1;3;3;3;1;5;2;2;3;4
 03.10.2026;СКА;Адмирал;6;5;БУЛ;5;5;3;2;5;1;6;0;5;0;4;1
-03.10.2026;ЦСКА;ХК Динамо-москва;4;3;БУЛ;3;3;2;2;4;2;3;3;3;1;3;1
+03.10.2026;ЦСКА;ХК Динамо-Москва;4;3;БУЛ;3;3;2;2;4;2;3;3;3;1;3;1
 03.10.2026;Северсталь;Драконы;2;1;ОТ;1;1;4;1;2;4;3;3;3;3;2;3
-03.10.2026;Динамо Мн;Локомотив;4;3;осн. время;4;3;1;3;2;3;1;3;2;4;1;2
-03.10.2026;ХК Сочи;Торпедо;0;6;осн. время;0;6;1;4;1;4;2;4;2;4;2;4
+03.10.2026;Динамо-Минск;Локомотив;4;3;осн. время;4;3;1;3;2;3;1;3;2;4;1;2
+03.10.2026;Сочи;Торпедо;0;6;осн. время;0;6;1;4;1;4;2;4;2;4;2;4
 04.10.2026;Нефтехимик;Сибирь;2;3;осн. время;3;2;3;1;4;3;4;1;4;2;3;1
 04.10.2026;Автомобилист;Амур;0;2;осн. время;0;2;5;1;3;2;4;2;3;1;3;2
 04.10.2026;Спартак;Барыс;3;4;БУЛ;3;3;4;2;2;4;6;2;5;3;2;3
-05.10.2026;Металлург Мг;Адмирал;2;5;осн. время;2;5;4;2;5;1;5;3;5;1;4;1
+05.10.2026;Металлург;Адмирал;2;5;осн. время;2;5;4;2;5;1;5;3;5;1;4;1
 05.10.2026;Лада;Драконы;0;5;осн. время;0;5;2;4;2;3;1;4;1;4;2;3
 05.10.2026;ЦСКА;Салават Юлаев;3;1;осн. время;3;1;3;1;2;3;4;1;3;3;3;2
-05.10.2026;Динамо Мн;Торпедо;1;2;БУЛ;1;1;4;1;4;2;3;3;2;3;3;2
+05.10.2026;Динамо-Минск;Торпедо;1;2;БУЛ;1;1;4;1;4;2;3;3;2;3;3;2
 05.10.2026;Ак Барс;Локомотив;0;2;осн. время;0;2;3;1;2;4;3;4;1;3;1;2
 06.10.2026;Автомобилист;Авангард;4;0;осн. время;4;0;2;4;1;3;2;2;1;4;2;3
 06.10.2026;Трактор;Амур;1;2;осн. время;1;2;4;2;3;1;4;0;2;0;3;1
 06.10.2026;СКА;Северсталь;2;5;осн. время;2;5;3;3;5;2;6;4;6;3;4;2
 07.10.2026;Сибирь;Салават Юлаев;4;5;ОТ;4;4;3;2;2;3;2;4;1;4;2;3
-07.10.2026;Металлург Мг;Адмирал;3;0;осн. время;3;0;5;2;4;1;4;4;5;1;3;2
-07.10.2026;ХК Динамо-москва;Драконы;2;3;осн. время;2;3;4;1;3;1;4;1;2;2;4;3
-07.10.2026;ХК Сочи;Спартак;2;5;осн. время;2;5;4;4;1;5;3;5;2;5;2;3
+07.10.2026;Металлург;Адмирал;3;0;осн. время;3;0;5;2;4;1;4;4;5;1;3;2
+07.10.2026;ХК Динамо-Москва;Драконы;2;3;осн. время;2;3;4;1;3;1;4;1;2;2;4;3
+07.10.2026;Сочи;Спартак;2;5;осн. время;2;5;4;4;1;5;3;5;2;5;2;3
 08.10.2026;Трактор;Амур;0;2;осн. время;0;2;4;1;3;1;3;2;3;1;3;1
-08.10.2026;Динамо Мн;СКА;4;2;осн. время;4;2;3;5;2;4;4;2;1;4;3;4
+08.10.2026;Динамо-Минск;СКА;4;2;осн. время;4;2;3;5;2;4;4;2;1;4;3;4
 08.10.2026;Торпедо;Северсталь;2;3;осн. время;2;3;2;4;3;2;5;2;4;2;4;2
 08.10.2026;Нефтехимик;Авангард;0;1;осн. время;0;1;1;3;2;3;1;4;2;3;3;4
-09.10.2026;Металлург Мг;Салават Юлаев;7;1;осн. время;7;1;3;2;4;2;2;2;4;2;3;2
-09.10.2026;ХК Сочи;Спартак;0;2;осн. время;0;2;2;3;1;4;2;5;1;5;2;4
-09.10.2026;ХК Динамо-москва;ЦСКА;2;5;осн. время;2;5;2;3;2;4;1;4;1;3;2;3
+09.10.2026;Металлург;Салават Юлаев;7;1;осн. время;7;1;3;2;4;2;2;2;4;2;3;2
+09.10.2026;Сочи;Спартак;0;2;осн. время;0;2;2;3;1;4;2;5;1;5;2;4
+09.10.2026;ХК Динамо-Москва;ЦСКА;2;5;осн. время;2;5;2;3;2;4;1;4;1;3;2;3
 10.10.2026;Адмирал;Лада;4;3;ОТ;3;3;4;1;4;2;5;1;3;0;3;1
 10.10.2026;Трактор;Сибирь;1;2;осн. время;1;2;4;1;3;1;4;1;2;2;3;2
 10.10.2026;Барыс;Авангард;5;1;осн. время;5;1;1;3;4;3;3;3;2;5;3;2
-10.10.2026;Ак Bars;Северсталь;1;4;осн. время;1;4;4;2;3;2;4;3;3;2;3;2
-10.10.2026;Локомотив;Динамо Мн;6;1;осн. время;6;1;3;1;2;2;3;2;4;1;3;1
-11.10.2026;ХК Динамо-москва;СКА;4;3;ОТ;3;3;4;2;2;3;3;4;2;3;2;4
+10.10.2026;Ак Барс;Северсталь;1;4;осн. время;1;4;4;2;3;2;4;3;3;2;3;2
+10.10.2026;Локомотив;Динамо-Минск;6;1;осн. время;6;1;3;1;2;2;3;2;4;1;3;1
+11.10.2026;ХК Динамо-Москва;СКА;4;3;ОТ;3;3;4;2;2;3;3;4;2;3;2;4
 12.10.2026;Амур;Лада;1;0;осн. время;1;0;2;3;4;1;4;1;2;0;3;1
 12.10.2026;Салават Юлаев;Нефтехимик;4;3;осн. время;4;3;4;2;2;3;4;1;2;2;4;2
 12.10.2026;Барыс;Сибирь;2;3;осн. время;2;3;3;1;4;2;1;3;4;1;3;2
-12.10.2026;Ак Барс;ХК Сочи;2;3;осн. время;2;3;4;1;3;1;5;0;4;2;3;1
-12.10.2026;Драконы;Динамо Мн;2;3;осн. время;2;3;3;3;2;4;4;2;2;3;3;2
-12.10.2026;Торпедо;Металлург Мг;2;3;ОТ;2;2;2;4;2;3;3;3;2;5;2;3
+12.10.2026;Ак Барс;Сочи;2;3;осн. время;2;3;4;1;3;1;5;0;4;2;3;1
+12.10.2026;Драконы;Динамо-Минск;2;3;осн. время;2;3;3;3;2;4;4;2;2;3;3;2
+12.10.2026;Торпедо;Металлург;2;3;ОТ;2;2;2;4;2;3;3;3;2;5;2;3
 13.10.2026;Северсталь;СКА;;;;;;;;;;;;;;
 14.10.2026;Амур;Спартак;;;;;;;;;;;;;;
 14.10.2026;Салават Юлаев;Сибирь;;;;;;;;;;;;;;
 14.10.2026;Барыс;Автомобилист;;;;;;;;;;;;;;
-14.10.2026;Динамо Мн;Металлург Мг;;;;;;;;;;;;;;
-14.10.2026;ЦСКА;ХК Динамо-москва;;;;;;;;;;;;;;
+14.10.2026;Динамо-Минск;Металлург;;;;;;;;;;;;;;
+14.10.2026;ЦСКА;ХК Динамо-Москва;;;;;;;;;;;;;;
 14.10.2026;Драконы;Трактор;;;;;;;;;;;;;;
 15.10.2026;Лада;СКА;;;;;;;;;;;;;;
 15.10.2026;Северсталь;Локомотив;;;;;;;;;;;;;;
@@ -1759,49 +1785,55 @@
 16.10.2026;Драконы;Ак Барс;;;;;;;;;;;;;;
 17.10.2026;Амур;Салават Юлаев;;;;;;;;;;;;;;
 17.10.2026;Сибирь;Барыс;;;;;;;;;;;;;;
-17.10.2026;ХК Сочи;Локомотив;;;;;;;;;;;;;;
+17.10.2026;Сочи;Локомотив;;;;;;;;;;;;;;
 18.10.2026;ЦСКА;Нефтехимик;;;;;;;;;;;;;;
 18.10.2026;Авангард;Трактор;;;;;;;;;;;;;;
-18.10.2026;Металлург Мг;Автомобилист;;;;;;;;;;;;;;
-18.10.2026;Лада;ХК Динамо-москва;;;;;;;;;;;;;;
-18.10.2026;Динамо Мн;Ак Барс;;;;;;;;;;;;;;
+18.10.2026;Металлург;Автомобилист;;;;;;;;;;;;;;
+18.10.2026;Лада;ХК Динамо-Москва;;;;;;;;;;;;;;
+18.10.2026;Динамо-Минск;Ак Барс;;;;;;;;;;;;;;
 19.10.2026;Амур;Барыс;;;;;;;;;;;;;;
 19.10.2026;Адмирал;Салават Юлаев;;;;;;;;;;;;;;
 19.10.2026;Северсталь;Торпедо;;;;;;;;;;;;;;
-19.10.2026;ХК Сочи;Драконы;;;;;;;;;;;;;;
+19.10.2026;Сочи;Драконы;;;;;;;;;;;;;;
 20.10.2026;Локомотив;Нефтехимик;;;;;;;;;;;;;;
-20.10.2026;ХК Динамо-москва;Сибирь;;;;;;;;;;;;;;
+20.10.2026;ХК Динамо-Москва;Сибирь;;;;;;;;;;;;;;
 20.10.2026;СКА;Автомобилист;;;;;;;;;;;;;;
 21.10.2026;Адмирал;Барыс;;;;;;;;;;;;;;
-21.10.2026;Металлург Мг;Салават Юлаев;;;;;;;;;;;;;;
+21.10.2026;Металлург;Салават Юлаев;;;;;;;;;;;;;;
 21.10.2026;Ак Барс;Торпедо;;;;;;;;;;;;;;
 21.10.2026;Северсталь;Драконы;;;;;;;;;;;;;;
 21.10.2026;Спартак;ЦСКА;;;;;;;;;;;;;;
 22.10.2026;Авангард;Нефтехимик;;;;;;;;;;;;;;
 22.10.2026;СКА;Сибирь;;;;;;;;;;;;;;
-22.10.2026;ХК Сочи;Динамо Мн;;;;;;;;;;;;;;
+22.10.2026;Сочи;Динамо-Минск;;;;;;;;;;;;;;
 23.10.2026;Трактор;Ак Барс;;;;;;;;;;;;;;
 23.10.2026;Автомобилист;ЦСКА;;;;;;;;;;;;;;
 23.10.2026;Лада;Драконы;;;;;;;;;;;;;;
-23.10.2026;Локомотив;Динамо Мн;;;;;;;;;;;;;;
+23.10.2026;Локомотив;Динамо-Минск;;;;;;;;;;;;;;
 23.10.2026;Спартак;Северсталь;;;;;;;;;;;;;;
-24.10.2026;Металлург Мг;Сибирь;;;;;;;;;;;;;;
-24.10.2026;Торпедо;Динамо Мн;;;;;;;;;;;;;;
+24.10.2026;Металлург;Сибирь;;;;;;;;;;;;;;
+24.10.2026;Торпедо;Динамо-Минск;;;;;;;;;;;;;;
 25.10.2026;Амур;Адмирал;;;;;;;;;;;;;;
 25.10.2026;Салават Юлаев;Ак Барс;;;;;;;;;;;;;;
-25.10.2026;Лада;ХК Сочи;;;;;;;;;;;;;;
+25.10.2026;Лада;Сочи;;;;;;;;;;;;;;
 25.10.2026;Спартак;Драконы;;;;;;;;;;;;;;
 25.10.2026;СКА;ЦСКА;;;;;;;;;;;;;;
 25.10.2026;Локомотив;Северсталь;;;;;;;;;;;;;;`;
 
     function createRowHTML(data = {}) {
-        const d = { date: '', home: '', away: '', factHome: '', factAway: '', factType: '', factOsHome: '', factOsAway: '', denis: ['', ''], anton: ['', ''], valeriy: ['', ''], ruslan: ['', ''], nastya: [''] };
+        const d = {
+            date: '', home: '', away: '', factHome: '', factAway: '', factType: '',
+            factOsHome: '', factOsAway: '',
+            denis: ['', ''], anton: ['', ''], valeriy: ['', ''],
+            ruslan: ['', ''], nastya: ['', ''], gitai: ['', '']
+        };
         const rowData = { ...d, ...data };
         if (data.denis) rowData.denis = data.denis;
         if (data.anton) rowData.anton = data.anton;
         if (data.valeriy) rowData.valeriy = data.valeriy;
         if (data.ruslan) rowData.ruslan = data.ruslan;
         if (data.nastya) rowData.nastya = data.nastya;
+        if (data.gitai) rowData.gitai = data.gitai;
         const selType = (val) => rowData.factType === val ? 'selected' : '';
         return `
             <td><input type="text" class="cell-input input-date" placeholder="дд.мм.гггг" value="${rowData.date}" oninput="handleInputChange(this)"></td>
@@ -1832,6 +1864,9 @@
             <td class="bg-nastya-cell"><input type="number" class="cell-input input-score pred-nastya-h" value="${rowData.nastya[0] || ''}" oninput="handleInputChange(this)"></td>
             <td class="bg-nastya-cell"><input type="number" class="cell-input input-score pred-nastya-a" value="${rowData.nastya[1] || ''}" oninput="handleInputChange(this)"></td>
             <td class="bg-nastya-cell points-cell points-nastya"></td>
+            <td class="bg-gitai-cell"><input type="number" class="cell-input input-score pred-gitai-h" value="${rowData.gitai[0] || ''}" oninput="handleInputChange(this)"></td>
+            <td class="bg-gitai-cell"><input type="number" class="cell-input input-score pred-gitai-a" value="${rowData.gitai[1] || ''}" oninput="handleInputChange(this)"></td>
+            <td class="bg-gitai-cell points-cell points-gitai"></td>
             <td><button class="btn-delete-row" onclick="deleteRow(this)" title="Удалить матч">X</button></td>
         `;
     }
@@ -1844,14 +1879,17 @@
             const parts = line.split(';');
             if (parts.length < 18) return;
             const rowData = {
-                date: parts[0].trim(), home: parts[1].trim(), away: parts[2].trim(),
+                date: parts[0].trim(),
+                home: normalizeTeamName(parts[1]),
+                away: normalizeTeamName(parts[2]),
                 factHome: parts[3].trim(), factAway: parts[4].trim(), factType: parts[5].trim(),
                 factOsHome: parts[6].trim(), factOsAway: parts[7].trim(),
                 denis: [parts[8].trim(), parts[9].trim()],
                 anton: [parts[10].trim(), parts[11].trim()],
                 valeriy: [parts[12].trim(), parts[13].trim()],
                 ruslan: [parts[14].trim(), parts[15].trim()],
-                nastya: [parts[16].trim(), parts[17].trim()]
+                nastya: [parts[16].trim(), parts[17].trim()],
+                gitai: [parts[18] !== undefined ? parts[18].trim() : '', parts[19] !== undefined ? parts[19].trim() : '']
             };
             const tr = document.createElement('tr');
             tr.className = 'match-row';
@@ -1885,8 +1923,8 @@
                     const row = json[i];
                     if (!row || row.length < 3) continue;
                     const date = row[0] ? String(row[0]).trim() : '';
-                    const home = row[1] ? String(row[1]).trim() : '';
-                    const away = row[2] ? String(row[2]).trim() : '';
+                    const home = normalizeTeamName(row[1]);
+                    const away = normalizeTeamName(row[2]);
                     if (!home || !away) continue;
                     const key = date + '|' + home + '|' + away;
                     if (existingKeys.has(key)) { skippedCount++; continue; }
@@ -1902,7 +1940,8 @@
                         anton: [row[11] || '', row[12] || ''],
                         valeriy: [row[14] || '', row[15] || ''],
                         ruslan: [row[17] || '', row[18] || ''],
-                        nastya: [row[20] || '', row[21] || '']
+                        nastya: [row[20] || '', row[21] || ''],
+                        gitai: [row[23] || '', row[24] || '']
                     };
                     const tr = document.createElement('tr');
                     tr.className = 'match-row';
@@ -1938,7 +1977,10 @@
 
     function handleInputChange(input) {
         if (input.classList.contains('input-team')) {
-            const val = input.value.trim();
+            const raw = input.value;
+            const normalized = normalizeTeamName(raw);
+            if (normalized !== raw) input.value = normalized;
+            const val = normalized;
             if (val !== '' && !validTeams.includes(val)) {
                 input.classList.add('invalid-team'); input.title = "Команда не найдена!";
             } else { input.classList.remove('invalid-team'); input.title = ""; }
@@ -1957,19 +1999,23 @@
 
     function calculateAllPoints() {
         const rows = document.querySelectorAll('#table-body .match-row');
-        let totals = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
-        let stats = { denis: { wins: 0, total: 0 }, anton: { wins: 0, total: 0 }, valeriy: { wins: 0, total: 0 }, ruslan: { wins: 0, total: 0 }, nastya: { wins: 0, total: 0 } };
+        const pList = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya', 'gitai'];
+        const totals = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, gitai: 0 };
+        const stats = {};
+        pList.forEach(p => stats[p] = { wins: 0, total: 0 });
         rows.forEach(row => {
             const factOsHome = row.querySelector('.fact-os-home').value;
             const factOsAway = row.querySelector('.fact-os-away').value;
-            const pList = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
             pList.forEach(p => {
                 const predHome = row.querySelector(`.pred-${p}-h`).value;
                 const predAway = row.querySelector(`.pred-${p}-a`).value;
                 const pointsCell = row.querySelector(`.points-${p}`);
+                if (!pointsCell) return;
                 const points = calculateMatchPoints(factOsHome, factOsAway, predHome, predAway);
-                if (points === '') { pointsCell.textContent = ''; pointsCell.className = `points-cell points-${p}`; }
-                else {
+                if (points === '') {
+                    pointsCell.textContent = '';
+                    pointsCell.className = `points-cell points-${p}`;
+                } else {
                     pointsCell.textContent = points;
                     pointsCell.className = `points-cell points-${p} ${points > 0 ? 'points-positive' : 'points-negative'}`;
                     totals[p] += points;
@@ -1979,12 +2025,13 @@
             });
         });
         mainForecastTotals = { ...totals };
+
         const fmt = (w, t) => t === 0 ? '0,0%' : ((w / t) * 100).toFixed(1).replace('.', ',') + '%';
-        document.getElementById('pct-denis').textContent = fmt(stats.denis.wins, stats.denis.total);
-        document.getElementById('pct-anton').textContent = fmt(stats.anton.wins, stats.anton.total);
-        document.getElementById('pct-valeriy').textContent = fmt(stats.valeriy.wins, stats.valeriy.total);
-        document.getElementById('pct-ruslan').textContent = fmt(stats.ruslan.wins, stats.ruslan.total);
-        document.getElementById('pct-nastya').textContent = fmt(stats.nastya.wins, stats.nastya.total);
+        pList.forEach(p => {
+            const pctEl = document.getElementById('pct-' + p);
+            if (pctEl) pctEl.textContent = fmt(stats[p].wins, stats[p].total);
+        });
+
         updateLeaderboardTotals();
         updateAnalyticsChart();
         updateTeamStandings();
@@ -2008,7 +2055,8 @@
                 anton: [row.querySelector('.pred-anton-h').value, row.querySelector('.pred-anton-a').value],
                 valeriy: [row.querySelector('.pred-valeriy-h').value, row.querySelector('.pred-valeriy-a').value],
                 ruslan: [row.querySelector('.pred-ruslan-h').value, row.querySelector('.pred-ruslan-a').value],
-                nastya: [row.querySelector('.pred-nastya-h').value, row.querySelector('.pred-nastya-a').value]
+                nastya: [row.querySelector('.pred-nastya-h').value, row.querySelector('.pred-nastya-a').value],
+                gitai: [row.querySelector('.pred-gitai-h').value, row.querySelector('.pred-gitai-a').value]
             });
         });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -2022,6 +2070,9 @@
                 const tbody = document.getElementById('table-body');
                 tbody.innerHTML = '';
                 data.forEach(rowData => {
+                    rowData.home = normalizeTeamName(rowData.home);
+                    rowData.away = normalizeTeamName(rowData.away);
+                    if (!rowData.gitai) rowData.gitai = ['', ''];
                     const tr = document.createElement('tr');
                     tr.className = 'match-row';
                     tr.innerHTML = createRowHTML(rowData);
