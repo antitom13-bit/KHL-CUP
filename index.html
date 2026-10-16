@@ -28,7 +28,6 @@
         .btn-clear { background-color: #f44336; } .btn-clear:hover { background-color: #da190b; }
         .btn-toggle-past { background-color: #795548; } .btn-toggle-past:hover { background-color: #5d4037; }
         .btn-toggle-future { background-color: #673AB7; } .btn-toggle-future:hover { background-color: #512DA8; }
-        .btn-template { background-color: #00897B; } .btn-template:hover { background-color: #00695C; }
         .btn-ai { background-color: #9C27B0; } .btn-ai:hover { background-color: #7B1FA2; }
         .btn-backup { background-color: #455A64; } .btn-backup:hover { background-color: #37474F; }
         .table-container { max-height: 75vh; overflow-y: auto; overflow-x: auto; background-color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; position: relative; }
@@ -235,7 +234,6 @@
         .date-selector { padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-family: inherit; outline: none; cursor: pointer; }
         .date-selector:focus { border-color: #3498db; box-shadow: 0 0 0 3px rgba(52,152,219,0.15); }
         .records-quote { margin-top: 12px; padding: 10px 14px; background: #f8f9fa; border-left: 3px solid #7f8c8d; border-radius: 4px; font-size: 12px; font-style: italic; color: #555; }
-        /* Модальное окно AI-прогнозов */
         .ai-info-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
         .ai-info-modal-overlay.active { display: flex; }
         .ai-info-modal { background: #fff; border-radius: 8px; padding: 24px; width: 90%; max-width: 640px; max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,0.3); }
@@ -282,11 +280,10 @@
                 <option value="Сибирь"></option><option value="Трактор"></option>
             </datalist>
             <div class="controls">
-                <button class="btn btn-template" onclick="downloadTemplate()">📤 Скачать шаблон Excel</button>
                 <button class="btn btn-upload" onclick="document.getElementById('excel-upload').click()">📥 Загрузить прогнозы из Excel</button>
                 <input type="file" id="excel-upload" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(event)">
                 <button class="btn btn-ai" onclick="showAIPredictions()" title="Показать прогнозы ИИ на завтрашние матчи">🤖 Прогнозы ИИ на завтра</button>
-                <button class="btn btn-backup" onclick="exportBackup()" title="Сохранить полный бэкап (все матчи, результаты и прогнозы)">💾 Экспорт (бэкап)</button>
+                <button class="btn btn-backup" onclick="exportBackup()" title="Сохранить полный бэкап">💾 Экспорт (бэкап)</button>
                 <button class="btn btn-add" onclick="addNewRow()">+ Добавить матч</button>
                 <button class="btn btn-clear" onclick="clearAllData()">Очистить всё</button>
                 <button class="btn btn-toggle-past" id="toggle-past-btn" onclick="togglePast()" style="display:none;">Показать прошлые</button>
@@ -418,8 +415,7 @@
             <div class="records-wrapper">
                 <div class="records-grid">
                     <div class="record-card day">
-                        <h3>
-                            📊 Результаты дня
+                        <h3>📊 Результаты дня
                             <select id="records-day-select" class="date-selector" onchange="renderRecords()">
                                 <option value="">— выберите день —</option>
                             </select>
@@ -427,8 +423,7 @@
                         <div id="records-day-content"></div>
                     </div>
                     <div class="record-card week">
-                        <h3>
-                            🗓️ Лучший за неделю
+                        <h3>🗓️ Лучший за неделю
                             <select id="records-week-select" class="date-selector" onchange="renderRecords()">
                                 <option value="">— выберите неделю —</option>
                             </select>
@@ -436,8 +431,7 @@
                         <div id="records-week-content"></div>
                     </div>
                     <div class="record-card month">
-                        <h3>
-                            📅 Лучший за месяц
+                        <h3>📅 Лучший за месяц
                             <select id="records-month-select" class="date-selector" onchange="renderRecords()">
                                 <option value="">— выберите месяц —</option>
                             </select>
@@ -546,7 +540,7 @@
         return teamAliases[trimmed] || trimmed;
     }
 
-    const STORAGE_KEY = 'khk_predictions_data_v14';
+    const STORAGE_KEY = 'khk_predictions_data_v15';
     const PLAYOFF_STORAGE_KEY = 'khk_playoff_data_v6';
 
     let showPastMatches = false;
@@ -1507,55 +1501,6 @@
         });
     }
 
-    function downloadTemplate() {
-        const header = [
-            'Дата', 'Хозяева', 'Гости',
-            'Факт Хоз', 'Факт Гост', 'Тип',
-            'ОС Хоз', 'ОС Гост',
-            'Денис Х', 'Денис Г',
-            'Антон Х', 'Антон Г',
-            'Валерий Х', 'Валерий Г',
-            'Руслан Х', 'Руслан Г',
-            'Настя Х', 'Настя Г'
-        ];
-        const rows = [header];
-        const domRows = Array.from(document.querySelectorAll('#table-body .match-row'));
-        domRows.sort((a, b) => {
-            const da = parseDate(a.querySelector('.input-date').value);
-            const db = parseDate(b.querySelector('.input-date').value);
-            return (da === null ? 1e18 : da) - (db === null ? 1e18 : db);
-        });
-        domRows.forEach(row => {
-            const sc = row.querySelectorAll('.input-score');
-            rows.push([
-                row.querySelector('.input-date').value || '',
-                row.querySelectorAll('.input-team')[0].value || '',
-                row.querySelectorAll('.input-team')[1].value || '',
-                sc[0] ? sc[0].value : '',
-                sc[1] ? sc[1].value : '',
-                row.querySelector('.input-type').value || '',
-                row.querySelector('.fact-os-home').value || '',
-                row.querySelector('.fact-os-away').value || '',
-                row.querySelector('.pred-denis-h').value || '',
-                row.querySelector('.pred-denis-a').value || '',
-                row.querySelector('.pred-anton-h').value || '',
-                row.querySelector('.pred-anton-a').value || '',
-                row.querySelector('.pred-valeriy-h').value || '',
-                row.querySelector('.pred-valeriy-a').value || '',
-                row.querySelector('.pred-ruslan-h').value || '',
-                row.querySelector('.pred-ruslan-a').value || '',
-                row.querySelector('.pred-nastya-h').value || '',
-                row.querySelector('.pred-nastya-a').value || ''
-            ]);
-        });
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = header.map((_, i) => ({ wch: i < 3 ? 14 : (i === 5 ? 12 : 9) }));
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Прогнозы');
-        const dateStr = new Date().toISOString().slice(0, 10);
-        XLSX.writeFile(wb, `КХЛ_шаблон_${dateStr}.xlsx`);
-    }
-
     function exportBackup() {
         const now = new Date();
         const pad = n => String(n).padStart(2, '0');
@@ -1605,7 +1550,7 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Бэкап');
         XLSX.writeFile(wb, `КХЛ_бэкап_${stamp}.xlsx`);
-        alert('💾 Бэкап сохранён.\n\nХраните этот файл — из него можно восстановить всю историю, если браузер потеряет данные.');
+        alert('💾 Бэкап сохранён.');
     }
 
     // ======== ГИБКИЙ ПАРСЕР ДАТ ========
@@ -1620,24 +1565,18 @@
         const s = String(val).trim();
         if (!s) return '';
         if (/^\d{2}\.\d{2}\.\d{4}$/.test(s)) return s;
-        
-        // Формат 2026-09-05 00:00:00
+        // 2026-09-05 00:00:00
         let m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[T\s]+\d{1,2}:\d{2}(?::\d{2})?)?$/);
         if (m) return `${m[3].padStart(2,'0')}.${m[2].padStart(2,'0')}.${m[1]}`;
-        
-        // Формат 24.09.2026
+        // 24.09.2026
         m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
         if (m) return `${m[1].padStart(2,'0')}.${m[2].padStart(2,'0')}.${m[3]}`;
-        
-        // Формат 24.09.20.26 (опечатка)
+        // 24.09.20.26 (опечатка)
         m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2})\.(\d{2})$/);
         if (m) return `${m[1].padStart(2,'0')}.${m[2].padStart(2,'0')}.${m[3]}${m[4]}`;
-        
-        // Формат 24/09/2026 или 24-09-2026
+        // 24/09/2026 или 24-09-2026
         m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
         if (m) return `${m[1].padStart(2,'0')}.${m[2].padStart(2,'0')}.${m[3]}`;
-        
-        // Excel serial number
         if (/^\d{5}(\.\d+)?$/.test(s)) {
             const serial = parseFloat(s);
             if (serial > 36526 && serial < 80000) {
@@ -1670,7 +1609,7 @@
         return pairs;
     }
 
-    // ======== ЗАГРУЗКА ШАБЛОНА (ОБНОВЛЕНИЕ + ДОБАВЛЕНИЕ) ========
+    // ======== ЗАГРУЗКА ФАЙЛА: обновление существующих + добавление новых ========
     function handleFileUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -1683,6 +1622,7 @@
                 const json = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false, defval: '', dateNF: 'dd.mm.yyyy'});
                 if (json.length < 3) { alert('Файл пуст.'); return; }
 
+                // Ищем строку с "Дата"
                 let headerIdx = -1;
                 for (let i = 0; i < Math.min(6, json.length); i++) {
                     if (json[i] && json[i].some(c => String(c).toLowerCase().includes('дата'))) {
@@ -1742,7 +1682,6 @@
 
                 const predKeys = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
                 let addedCount = 0, updatedCount = 0, skippedCount = 0;
-                const conflicts = [];
 
                 for (let i = headerIdx + 1; i < json.length; i++) {
                     const r = json[i];
@@ -1777,7 +1716,7 @@
                     const key = date + '|' + home + '|' + away;
 
                     if (existingRows.has(key)) {
-                        // ОБНОВЛЕНИЕ СУЩЕСТВУЮЩЕЙ СТРОКИ
+                        // ОБНОВЛЯЕМ существующую строку
                         const row = existingRows.get(key);
                         let changed = false;
                         const setVal = (selector, val) => {
@@ -1785,20 +1724,29 @@
                             const el = row.querySelector(selector);
                             if (el && el.value !== val) { el.value = val; changed = true; }
                         };
+                        // Обновляем дату
                         setVal('.input-date', date);
+                        // Обновляем команды
                         const teamInputs = row.querySelectorAll('.input-team');
                         if (teamInputs.length >= 2) {
-                            if (teamInputs[0].value !== home && home !== '') { teamInputs[0].value = home; changed = true; }
-                            if (teamInputs[1].value !== away && away !== '') { teamInputs[1].value = away; changed = true; }
+                            if (home !== '' && teamInputs[0].value !== home) { teamInputs[0].value = home; changed = true; }
+                            if (away !== '' && teamInputs[1].value !== away) { teamInputs[1].value = away; changed = true; }
                         }
+                        // Обновляем факт матча (полный счёт)
                         const scoreInputs = row.querySelectorAll('.input-score');
                         if (scoreInputs.length >= 2) {
-                            if (scoreInputs[0].value !== newData.factHome && newData.factHome !== '') { scoreInputs[0].value = newData.factHome; changed = true; }
-                            if (scoreInputs[1].value !== newData.factAway && newData.factAway !== '') { scoreInputs[1].value = newData.factAway; changed = true; }
+                            if (newData.factHome !== '' && scoreInputs[0].value !== newData.factHome) { scoreInputs[0].value = newData.factHome; changed = true; }
+                            if (newData.factAway !== '' && scoreInputs[1].value !== newData.factAway) { scoreInputs[1].value = newData.factAway; changed = true; }
                         }
-                        setVal('.input-type', newData.type);
+                        // Тип матча
+                        if (newData.type !== '') {
+                            const typeSel = row.querySelector('.input-type');
+                            if (typeSel && typeSel.value !== newData.type) { typeSel.value = newData.type; changed = true; }
+                        }
+                        // Основное время
                         setVal('.fact-os-home', newData.factOsHome);
                         setVal('.fact-os-away', newData.factOsAway);
+                        // Прогнозы участников
                         predKeys.forEach(p => {
                             if (newData[p]) {
                                 setVal(`.pred-${p}-h`, newData[p][0]);
@@ -1807,7 +1755,7 @@
                         });
                         if (changed) updatedCount++;
                     } else {
-                        // ДОБАВЛЕНИЕ НОВОЙ СТРОКИ
+                        // ДОБАВЛЯЕМ новую строку
                         const rowData = {
                             date, home, away,
                             factHome: newData.factHome, factAway: newData.factAway,
@@ -1831,9 +1779,9 @@
 
                 let msg = `📊 Загрузка завершена.\n\n`;
                 msg += `➕ Добавлено новых матчей: ${addedCount}\n`;
-                msg += `🔄 Обновлено существующих: ${updatedCount}\n`;
-                if (skippedCount > 0) msg += `⚠️ Пропущено пустых/битых строк: ${skippedCount}\n`;
-                if (addedCount === 0 && updatedCount === 0) msg += `\nℹ️ Данные не изменились.`;
+                msg += `🔄 Обновлено (прогнозы/результаты): ${updatedCount}\n`;
+                if (skippedCount > 0) msg += `⚠️ Пропущено пустых строк: ${skippedCount}\n`;
+                if (addedCount === 0 && updatedCount === 0) msg += `\nℹ️ Изменений нет — данные совпадают.`;
 
                 alert(msg);
             } catch (error) {
@@ -1845,7 +1793,7 @@
         event.target.value = '';
     }
 
-    // ======== AI-прогнозы как ИНФОРМАЦИЯ (не записываются в таблицу) ========
+    // ======== AI-прогнозы ========
     function computeTomorrowAIPredictions() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -1925,7 +1873,6 @@
                 </div>`;
             }).join('');
         }
-
         overlay.classList.add('active');
     }
     function closeAIInfo() {
@@ -1994,36 +1941,11 @@
     function loadEmbeddedData() {
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
-        if (!embeddedData || !embeddedData.trim()) {
-            const tr = document.createElement('tr');
-            tr.className = 'match-row';
-            tr.innerHTML = createRowHTML();
-            tbody.appendChild(tr);
-            calculateAllPoints(); saveData(); filterRowsByDateRange();
-            return;
-        }
-        const lines = embeddedData.trim().split('\n');
-        lines.forEach(line => {
-            const parts = line.split(';');
-            if (parts.length < 18) return;
-            const rowData = {
-                date: parts[0].trim(),
-                home: normalizeTeamName(parts[1]),
-                away: normalizeTeamName(parts[2]),
-                factHome: parts[3].trim(), factAway: parts[4].trim(), factType: parts[5].trim(),
-                factOsHome: parts[6].trim(), factOsAway: parts[7].trim(),
-                denis: [parts[8].trim(), parts[9].trim()],
-                anton: [parts[10].trim(), parts[11].trim()],
-                valeriy: [parts[12].trim(), parts[13].trim()],
-                ruslan: [parts[14].trim(), parts[15].trim()],
-                nastya: [parts[16].trim(), parts[17].trim()]
-            };
-            const tr = document.createElement('tr');
-            tr.className = 'match-row';
-            tr.innerHTML = createRowHTML(rowData);
-            tbody.appendChild(tr);
-        });
-        sortTableByDate(); calculateAllPoints(); saveData(); filterRowsByDateRange();
+        const tr = document.createElement('tr');
+        tr.className = 'match-row';
+        tr.innerHTML = createRowHTML();
+        tbody.appendChild(tr);
+        calculateAllPoints(); saveData(); filterRowsByDateRange();
     }
 
     function addNewRow() {
