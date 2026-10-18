@@ -46,6 +46,9 @@
         .invalid-team { background-color: #ffcccc !important; color: #990000; font-weight: bold; }
         .bg-denis { background-color: #cce0e6; } .bg-anton { background-color: #fce4d6; } .bg-valeriy { background-color: #fdf1cb; } .bg-ruslan { background-color: #e2b8b8; } .bg-nastya { background-color: #e6a8a8; }
         .bg-denis-cell { background-color: #e6f2f5; } .bg-anton-cell { background-color: #fef4ee; } .bg-valeriy-cell { background-color: #fff9e6; } .bg-ruslan-cell { background-color: #f4e1e1; } .bg-nastya-cell { background-color: #f5d6d6; }
+        .bg-ai { background-color: #ddd0f0; } .bg-ai-cell { background-color: #f0ebfa; }
+        .bg-ai-cell input[readonly] { color: #5a3a8a; font-weight: bold; cursor: default; background: transparent; }
+        .bg-ai-cell input[readonly]:focus { background-color: transparent; box-shadow: none; outline: none; }
         tr.match-row.row-archived-past, tr.match-row.row-archived-future { display: none; }
         #table-body.show-past tr.match-row.row-archived-past { display: table-row; opacity: 0.55; }
         #table-body.show-past tr.match-row.row-archived-past input, #table-body.show-past tr.match-row.row-archived-past select { color: #777; }
@@ -221,6 +224,12 @@
         .record-line.gold .label::before { content: '🏆 '; }
         .record-line.bad { background: linear-gradient(90deg, #ffebee 0%, #ffcdd2 100%); margin: 0 -24px; padding: 10px 24px; border-left: 4px solid #e53935; }
         .record-line.bad .label::before { content: '💀 '; }
+        .record-line.rank-1 { background: linear-gradient(90deg, #fff9c4 0%, #fffde7 100%); margin: 0 -24px; padding: 10px 24px; border-left: 4px solid #fbc02d; }
+        .record-line.rank-2 { background: linear-gradient(90deg, #f5f5f5 0%, #fafafa 100%); margin: 0 -24px; padding: 8px 24px; border-left: 4px solid #9e9e9e; }
+        .record-line.rank-3 { background: linear-gradient(90deg, #ffe0b2 0%, #fff3e0 100%); margin: 0 -24px; padding: 8px 24px; border-left: 4px solid #cd7f32; }
+        .record-line.rank-bad-1 { background: linear-gradient(90deg, #ffcdd2 0%, #ffebee 100%); margin: 0 -24px; padding: 10px 24px; border-left: 4px solid #e53935; }
+        .record-line.rank-bad-2 { background: linear-gradient(90deg, #f8bbd0 0%, #fce4ec 100%); margin: 0 -24px; padding: 8px 24px; border-left: 4px solid #ec407a; }
+        .record-line.rank-bad-3 { background: linear-gradient(90deg, #ffccbc 0%, #fbe9e7 100%); margin: 0 -24px; padding: 8px 24px; border-left: 4px solid #ff7043; }
         .record-empty { text-align: center; color: #999; font-style: italic; padding: 20px 0; font-size: 13px; }
         .record-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
         .record-table th { background: #34495e; color: #fff; padding: 8px 10px; text-align: left; font-weight: bold; font-size: 12px; }
@@ -247,6 +256,10 @@
         .ai-info-empty { text-align: center; color: #888; padding: 24px; font-style: italic; }
         .ai-info-close { display: block; width: 100%; margin-top: 16px; padding: 10px; background: #9C27B0; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
         .ai-info-close:hover { background: #7B1FA2; }
+        .ai-strength-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 4px; }
+        .ai-strength-strong { background: #c6efce; color: #006100; }
+        .ai-strength-mid { background: #fff3cd; color: #856404; }
+        .ai-strength-weak { background: #ffc7ce; color: #9c0006; }
     </style>
 </head>
 <body>
@@ -282,7 +295,7 @@
             <div class="controls">
                 <button class="btn btn-upload" onclick="document.getElementById('excel-upload').click()">📥 Загрузить прогнозы из Excel</button>
                 <input type="file" id="excel-upload" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(event)">
-                <button class="btn btn-ai" onclick="showAIPredictions()" title="Показать прогнозы ИИ на завтрашние матчи">🤖 Прогнозы ИИ на завтра</button>
+                <button class="btn btn-ai" onclick="showAIPredictions()" title="Рассчитать прогнозы ИИ на завтрашние матчи и показать их">🤖 Прогнозы ИИ на завтра</button>
                 <button class="btn btn-backup" onclick="exportBackup()" title="Сохранить полный бэкап">💾 Экспорт (бэкап)</button>
                 <button class="btn btn-add" onclick="addNewRow()">+ Добавить матч</button>
                 <button class="btn btn-clear" onclick="clearAllData()">Очистить всё</button>
@@ -308,10 +321,12 @@
                             <th colspan="3" class="bg-valeriy">Валерий<br><span id="pct-valeriy" style="font-size: 11px; color: #555;">0,0%</span></th>
                             <th colspan="3" class="bg-ruslan">Руслан<br><span id="pct-ruslan" style="font-size: 11px; color: #555;">0,0%</span></th>
                             <th colspan="3" class="bg-nastya">Настя<br><span id="pct-nastya" style="font-size: 11px; color: #555;">0,0%</span></th>
+                            <th colspan="3" class="bg-ai">🤖 ИИ<br><span id="pct-ai" style="font-size: 11px; color: #555;">0,0%</span></th>
                             <th rowspan="2" style="width: 30px;"></th>
                         </tr>
                         <tr>
                             <th>Хоз</th><th>Гост</th><th>Тип</th><th>Хоз</th><th>Гост</th>
+                            <th>Голы<br>хоз</th><th>Голы<br>гост</th><th>Очки</th>
                             <th>Голы<br>хоз</th><th>Голы<br>гост</th><th>Очки</th>
                             <th>Голы<br>хоз</th><th>Голы<br>гост</th><th>Очки</th>
                             <th>Голы<br>хоз</th><th>Голы<br>гост</th><th>Очки</th>
@@ -390,6 +405,7 @@
                             <tr class="place-3"><td>Коморин Валерий</td><td><span id="total-valeriy" class="total-score">0</span><span id="breakdown-valeriy" class="bonus-breakdown"></span></td><td>3 место</td><td class="icon-cell">💐</td></tr>
                             <tr class="place-3"><td>Коморин Руслан</td><td><span id="total-ruslan" class="total-score">0</span><span id="breakdown-ruslan" class="bonus-breakdown"></span></td><td>3 место</td><td class="icon-cell">💐</td></tr>
                             <tr><td>Коморина Анастасия</td><td><span id="total-nastya" class="total-score">0</span><span id="breakdown-nastya" class="bonus-breakdown"></span></td><td></td><td class="icon-cell">🍓</td></tr>
+                            <tr style="background:#ede7f6;"><td>🤖 ИИ-прогнозист</td><td><span id="total-ai" class="total-score">0</span><span id="breakdown-ai" class="bonus-breakdown"></span></td><td>—</td><td class="icon-cell">🤖</td></tr>
                         </tbody>
                     </table>
                     <div class="rules-note" style="text-align:left; padding:8px 15px; font-size:11px; color:#666;">
@@ -467,7 +483,7 @@
 <!-- Модальное окно AI-прогнозов -->
 <div class="ai-info-modal-overlay" id="ai-info-modal-overlay">
     <div class="ai-info-modal">
-        <h3>🤖 Прогнозы GIT-hub AI на завтра</h3>
+        <h3>🤖 Прогнозы ИИ на завтра</h3>
         <div class="ai-info-sub" id="ai-info-date"></div>
         <div id="ai-info-content"></div>
         <button class="ai-info-close" onclick="closeAIInfo()">Закрыть</button>
@@ -545,7 +561,7 @@
 
     let showPastMatches = false;
     let showFutureMatches = false;
-    let mainForecastTotals = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+    let mainForecastTotals = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, ai: 0 };
 
     function parseDateToObj(str) {
         if (!str) return null;
@@ -1009,9 +1025,9 @@
     }
 
     let analyticsChart = null;
-    const chartPlayers = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
-    const chartPlayerNames = { denis: 'Денис', anton: 'Антон', valeriy: 'Валерий', ruslan: 'Руслан', nastya: 'Настя' };
-    const chartColors = { denis: '#2196F3', anton: '#F44336', valeriy: '#FFC107', ruslan: '#4CAF50', nastya: '#FF9800' };
+    const chartPlayers = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya', 'ai'];
+    const chartPlayerNames = { denis: 'Денис', anton: 'Антон', valeriy: 'Валерий', ruslan: 'Руслан', nastya: 'Настя', ai: '🤖 ИИ' };
+    const chartColors = { denis: '#2196F3', anton: '#F44336', valeriy: '#FFC107', ruslan: '#4CAF50', nastya: '#FF9800', ai: '#9C27B0' };
 
     function buildAnalyticsData() {
         const rows = document.querySelectorAll('#table-body .match-row');
@@ -1046,8 +1062,8 @@
             return da - db;
         });
         const labels = [];
-        const cumulative = { denis: [], anton: [], valeriy: [], ruslan: [], nastya: [] };
-        const sums = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+        const cumulative = { denis: [], anton: [], valeriy: [], ruslan: [], nastya: [], ai: [] };
+        const sums = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, ai: 0 };
         completedMatches.forEach(match => {
             labels.push(`${match.date}  ${match.home} – ${match.away}`);
             chartPlayers.forEach(p => {
@@ -1119,8 +1135,8 @@
         }
     }
 
-    const recordsPlayers = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
-    const recordsNames = { denis: 'Денис', anton: 'Антон', valeriy: 'Валерий', ruslan: 'Руслан', nastya: 'Настя' };
+    const recordsPlayers = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya', 'ai'];
+    const recordsNames = { denis: 'Денис', anton: 'Антон', valeriy: 'Валерий', ruslan: 'Руслан', nastya: 'Настя', ai: '🤖 ИИ' };
 
     function collectCompletedMatchesWithPoints() {
         const matches = [];
@@ -1189,6 +1205,23 @@
         return d.getUTCFullYear() + '-W' + String(weekNo).padStart(2, '0');
     }
 
+    function getWeekDateRange(weekKey) {
+        const [yearStr, weekStr] = weekKey.split('-W');
+        const year = parseInt(yearStr);
+        const week = parseInt(weekStr);
+        const jan4 = new Date(Date.UTC(year, 0, 4));
+        const jan4Day = jan4.getUTCDay() || 7;
+        const mondayW1 = new Date(jan4);
+        mondayW1.setUTCDate(jan4.getUTCDate() - jan4Day + 1);
+        const mondayTarget = new Date(mondayW1);
+        mondayTarget.setUTCDate(mondayW1.getUTCDate() + (week - 1) * 7);
+        const sundayTarget = new Date(mondayTarget);
+        sundayTarget.setUTCDate(mondayTarget.getUTCDate() + 6);
+        const pad = n => String(n).padStart(2, '0');
+        const fmt = d => `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`;
+        return { start: fmt(mondayTarget), end: fmt(sundayTarget) };
+    }
+
     function renderDayStats(dateStr) {
         const container = document.getElementById('records-day-content');
         if (!container) return;
@@ -1204,7 +1237,7 @@
         });
         const avgHome = (totalHomeGoals / matches.length).toFixed(1);
         const avgAway = (totalAwayGoals / matches.length).toFixed(1);
-        const dayPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+        const dayPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, ai: 0 };
         matches.forEach(m => { recordsPlayers.forEach(p => { const v = m.points[p]; if (v !== '' && v !== null && !isNaN(v)) dayPoints[p] += Number(v); }); });
         const bestPts = Math.max(...Object.values(dayPoints));
         const bestPlayers = recordsPlayers.filter(p => dayPoints[p] === bestPts);
@@ -1236,7 +1269,9 @@
         const allMatches = collectCompletedMatchesWithPoints();
         const matches = allMatches.filter(m => getWeekKey(m.dateObj) === weekKey);
         if (matches.length === 0) { container.innerHTML = '<div class="record-empty">На этой неделе нет матчей</div>'; return; }
-        const weekPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+
+        const weekRange = getWeekDateRange(weekKey);
+        const weekPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, ai: 0 };
         matches.forEach(m => { recordsPlayers.forEach(p => { const v = m.points[p]; if (v !== '' && v !== null && !isNaN(v)) weekPoints[p] += Number(v); }); });
         const sorted = recordsPlayers.slice().sort((a, b) => weekPoints[b] - weekPoints[a]);
         const champion = sorted[0];
@@ -1248,12 +1283,20 @@
         });
         tableHtml += '</tbody></table>';
         container.innerHTML = `
-            <div class="record-line gold"><span class="label">Лучший прогнозист недели:</span><span class="value">${recordsNames[champion]}</span></div>
+            <div class="record-line" style="background:#f0f4f8; margin:0 -24px; padding:8px 24px; border-left:3px solid #2196F3;">
+                <span class="label">📅 Период недели:</span>
+                <span class="value">${weekRange.start} — ${weekRange.end}</span>
+            </div>
+            <div class="record-line" style="background:#f0f4f8; margin:0 -24px; padding:8px 24px; border-left:3px solid #2196F3;">
+                <span class="label">🏒 Матчи недели:</span>
+                <span class="value">${datesInWeek[0]} — ${datesInWeek[datesInWeek.length - 1]} (${datesInWeek.length} дн.)</span>
+            </div>
+            <div class="record-line gold" style="margin-top:10px;"><span class="label">Лучший прогнозист недели:</span><span class="value">${recordsNames[champion]}</span></div>
             <div class="records-quote">🎉 ${recordsNames[champion]}, поздравляем!<br>
                 ${weekPoints[champion] >= 15 ? 'Отличный результат — так держать!' : (weekPoints[champion] >= 5 ? 'Хорошая неделя — двигаемся дальше!' : 'Неделя была сложной, но всё ещё впереди.')}</div>
             <div style="margin-top:15px; font-weight:bold; font-size:12px; color:#555;">📋 Таблица очков за неделю:</div>
             ${tableHtml}
-            <div style="margin-top:12px; font-size:11px; color:#888; text-align:center;">Матчей на неделе: ${matches.length} · Дней: ${datesInWeek.length}</div>
+            <div style="margin-top:12px; font-size:11px; color:#888; text-align:center;">Матчей на неделе: ${matches.length} · Дней с матчами: ${datesInWeek.length}</div>
         `;
     }
 
@@ -1265,7 +1308,7 @@
         const allMatches = collectCompletedMatchesWithPoints();
         const matches = allMatches.filter(m => m.dateObj.getFullYear() === year && (m.dateObj.getMonth() + 1) === monthNum);
         if (matches.length === 0) { container.innerHTML = '<div class="record-empty">В этом месяце нет матчей</div>'; return; }
-        const monthPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+        const monthPoints = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, ai: 0 };
         matches.forEach(m => { recordsPlayers.forEach(p => { const v = m.points[p]; if (v !== '' && v !== null && !isNaN(v)) monthPoints[p] += Number(v); }); });
         const sorted = recordsPlayers.slice().sort((a, b) => monthPoints[b] - monthPoints[a]);
         const champion = sorted[0];
@@ -1290,31 +1333,62 @@
         if (!container) return;
         const allMatches = collectCompletedMatchesWithPoints();
         if (allMatches.length === 0) { container.innerHTML = '<div class="record-empty">Пока нет сыгранных матчей</div>'; return; }
+
         const byDay = {};
         allMatches.forEach(m => { if (!byDay[m.date]) byDay[m.date] = []; byDay[m.date].push(m); });
-        let bestRecord = { player: null, date: null, points: -Infinity };
-        let worstRecord = { player: null, date: null, points: Infinity };
+
+        const allRecords = [];
         Object.entries(byDay).forEach(([date, matches]) => {
-            const dayPts = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
-            matches.forEach(m => { recordsPlayers.forEach(p => { const v = m.points[p]; if (v !== '' && v !== null && !isNaN(v)) dayPts[p] += Number(v); }); });
+            const dayPts = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, ai: 0 };
+            matches.forEach(m => {
+                recordsPlayers.forEach(p => {
+                    const v = m.points[p];
+                    if (v !== '' && v !== null && !isNaN(v)) dayPts[p] += Number(v);
+                });
+            });
             recordsPlayers.forEach(p => {
-                if (dayPts[p] > bestRecord.points) bestRecord = { player: p, date, points: dayPts[p] };
-                if (dayPts[p] < worstRecord.points) worstRecord = { player: p, date, points: dayPts[p] };
+                const hasAny = matches.some(m => m.points[p] !== '' && m.points[p] !== null && !isNaN(m.points[p]));
+                if (hasAny) allRecords.push({ player: p, date, points: dayPts[p] });
             });
         });
+
+        if (allRecords.length === 0) {
+            container.innerHTML = '<div class="record-empty">Пока нет данных</div>';
+            return;
+        }
+
+        const bestSorted  = [...allRecords].sort((a, b) => b.points - a.points).slice(0, 3);
+        const worstSorted = [...allRecords].sort((a, b) => a.points - b.points).slice(0, 3);
+
+        const bestMedals  = ['🥇', '🥈', '🥉'];
+        const worstMedals = ['💀', '☠️', '⚠️'];
+
+        let bestHtml = '';
+        bestSorted.forEach((r, i) => {
+            bestHtml += `<div class="record-line rank-${i + 1}">
+                <span class="label">${bestMedals[i]} ${recordsNames[r.player]} — ${r.date}</span>
+                <span class="value">${r.points > 0 ? '+' : ''}${r.points}</span>
+            </div>`;
+        });
+
+        let worstHtml = '';
+        worstSorted.forEach((r, i) => {
+            worstHtml += `<div class="record-line rank-bad-${i + 1}">
+                <span class="label">${worstMedals[i]} ${recordsNames[r.player]} — ${r.date}</span>
+                <span class="value">${r.points > 0 ? '+' : ''}${r.points}</span>
+            </div>`;
+        });
+
+        const bestTop  = bestSorted[0]  ? bestSorted[0].points  : 0;
+        const worstTop = worstSorted[0] ? worstSorted[0].points : 0;
+
         container.innerHTML = `
             <div style="font-weight:bold; font-size:12px; color:#555; margin-bottom:10px;">📖 Книга рекордов турнира прогнозистов</div>
-            <div style="margin-bottom:8px; font-size:12px; color:#666;">🔥 <b>Лучший результат дня:</b></div>
-            ${bestRecord.player ? `
-                <div class="record-line gold"><span class="label">${recordsNames[bestRecord.player]} — ${bestRecord.date}</span><span class="value">+${bestRecord.points}</span></div>
-                <div style="font-size:11px; color:#888; margin:6px 0 14px 12px;">🏅 Такое чувство, что он один смотрел матчи.<br>Остальные в этот день, видимо, ставили наугад.</div>
-            ` : ''}
-            <div style="margin-bottom:8px; font-size:12px; color:#666;">💀 <b>АНТИРЕКОРД:</b></div>
-            ${worstRecord.player ? `
-                <div class="record-line bad"><span class="label">${recordsNames[worstRecord.player]} — ${worstRecord.date}</span><span class="value">${worstRecord.points}</span></div>
-                <div style="font-size:11px; color:#888; margin:6px 0 14px 12px;">💀 Мог бы просто не угадывать — вышло бы лучше.<br>❄️ Напоминаем: -1 очко за каждый промах.</div>
-            ` : ''}
-            <div class="records-quote">😄 Как говорится, у кого-то +${bestRecord.points || 0}, а у кого-то ${worstRecord.points || 0}.<br>Вопрос только в том, кто именно смотрел хоккей, а кто — прогнозы на погоду.</div>
+            <div style="margin-bottom:8px; font-size:12px; color:#666;">🔥 <b>ТОП-3 лучших результатов дня:</b></div>
+            ${bestHtml}
+            <div style="margin-top:14px; margin-bottom:8px; font-size:12px; color:#666;">💀 <b>ТОП-3 АНТИРЕКОРДОВ:</b></div>
+            ${worstHtml}
+            <div class="records-quote">😄 Как говорится, у кого-то +${bestTop}, а у кого-то ${worstTop}.<br>Вопрос только в том, кто именно смотрел хоккей, а кто — прогнозы на погоду.</div>
         `;
     }
 
@@ -1499,6 +1573,11 @@
                 else breakdownEl.textContent = '';
             }
         });
+        const aiMain = mainForecastTotals.ai || 0;
+        const aiTotalEl = document.getElementById('total-ai');
+        if (aiTotalEl) aiTotalEl.textContent = aiMain;
+        const aiBreakdownEl = document.getElementById('breakdown-ai');
+        if (aiBreakdownEl) aiBreakdownEl.textContent = 'только матчи';
     }
 
     function exportBackup() {
@@ -1513,7 +1592,8 @@
             'Антон Х', 'Антон Г',
             'Валерий Х', 'Валерий Г',
             'Руслан Х', 'Руслан Г',
-            'Настя Х', 'Настя Г'
+            'Настя Х', 'Настя Г',
+            'ИИ Х', 'ИИ Г'
         ];
         const rows = [header];
         const domRows = Array.from(document.querySelectorAll('#table-body .match-row'));
@@ -1542,7 +1622,9 @@
                 row.querySelector('.pred-ruslan-h').value || '',
                 row.querySelector('.pred-ruslan-a').value || '',
                 row.querySelector('.pred-nastya-h').value || '',
-                row.querySelector('.pred-nastya-a').value || ''
+                row.querySelector('.pred-nastya-a').value || '',
+                row.querySelector('.pred-ai-h').value || '',
+                row.querySelector('.pred-ai-a').value || ''
             ]);
         });
         const ws = XLSX.utils.aoa_to_sheet(rows);
@@ -1565,16 +1647,12 @@
         const s = String(val).trim();
         if (!s) return '';
         if (/^\d{2}\.\d{2}\.\d{4}$/.test(s)) return s;
-        // 2026-09-05 00:00:00
         let m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[T\s]+\d{1,2}:\d{2}(?::\d{2})?)?$/);
         if (m) return `${m[3].padStart(2,'0')}.${m[2].padStart(2,'0')}.${m[1]}`;
-        // 24.09.2026
         m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
         if (m) return `${m[1].padStart(2,'0')}.${m[2].padStart(2,'0')}.${m[3]}`;
-        // 24.09.20.26 (опечатка)
         m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2})\.(\d{2})$/);
         if (m) return `${m[1].padStart(2,'0')}.${m[2].padStart(2,'0')}.${m[3]}${m[4]}`;
-        // 24/09/2026 или 24-09-2026
         m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
         if (m) return `${m[1].padStart(2,'0')}.${m[2].padStart(2,'0')}.${m[3]}`;
         if (/^\d{5}(\.\d+)?$/.test(s)) {
@@ -1593,7 +1671,6 @@
         return '';
     }
 
-    // ======== АВТООПРЕДЕЛЕНИЕ ПАР "Голы хозяев"/"Голы гостей" ========
     function detectGoalPairs(headerRow) {
         const pairs = [];
         let pendingHome = null;
@@ -1609,7 +1686,6 @@
         return pairs;
     }
 
-    // ======== ЗАГРУЗКА ФАЙЛА: обновление существующих + добавление новых ========
     function handleFileUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -1622,7 +1698,6 @@
                 const json = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false, defval: '', dateNF: 'dd.mm.yyyy'});
                 if (json.length < 3) { alert('Файл пуст.'); return; }
 
-                // Ищем строку с "Дата"
                 let headerIdx = -1;
                 for (let i = 0; i < Math.min(6, json.length); i++) {
                     if (json[i] && json[i].some(c => String(c).toLowerCase().includes('дата'))) {
@@ -1716,7 +1791,6 @@
                     const key = date + '|' + home + '|' + away;
 
                     if (existingRows.has(key)) {
-                        // ОБНОВЛЯЕМ существующую строку
                         const row = existingRows.get(key);
                         let changed = false;
                         const setVal = (selector, val) => {
@@ -1724,29 +1798,23 @@
                             const el = row.querySelector(selector);
                             if (el && el.value !== val) { el.value = val; changed = true; }
                         };
-                        // Обновляем дату
                         setVal('.input-date', date);
-                        // Обновляем команды
                         const teamInputs = row.querySelectorAll('.input-team');
                         if (teamInputs.length >= 2) {
                             if (home !== '' && teamInputs[0].value !== home) { teamInputs[0].value = home; changed = true; }
                             if (away !== '' && teamInputs[1].value !== away) { teamInputs[1].value = away; changed = true; }
                         }
-                        // Обновляем факт матча (полный счёт)
                         const scoreInputs = row.querySelectorAll('.input-score');
                         if (scoreInputs.length >= 2) {
                             if (newData.factHome !== '' && scoreInputs[0].value !== newData.factHome) { scoreInputs[0].value = newData.factHome; changed = true; }
                             if (newData.factAway !== '' && scoreInputs[1].value !== newData.factAway) { scoreInputs[1].value = newData.factAway; changed = true; }
                         }
-                        // Тип матча
                         if (newData.type !== '') {
                             const typeSel = row.querySelector('.input-type');
                             if (typeSel && typeSel.value !== newData.type) { typeSel.value = newData.type; changed = true; }
                         }
-                        // Основное время
                         setVal('.fact-os-home', newData.factOsHome);
                         setVal('.fact-os-away', newData.factOsAway);
-                        // Прогнозы участников
                         predKeys.forEach(p => {
                             if (newData[p]) {
                                 setVal(`.pred-${p}-h`, newData[p][0]);
@@ -1755,7 +1823,6 @@
                         });
                         if (changed) updatedCount++;
                     } else {
-                        // ДОБАВЛЯЕМ новую строку
                         const rowData = {
                             date, home, away,
                             factHome: newData.factHome, factAway: newData.factAway,
@@ -1793,7 +1860,221 @@
         event.target.value = '';
     }
 
-    // ======== AI-прогнозы ========
+    // ======== ИИ-ПРОГНОЗИСТ: МОДЕЛЬ СИЛЫ, ЭНЕРГИИ И МОТИВАЦИИ ========
+    const AI_INIT = { strength: 50, energy: 100, motivation: 50 };
+
+    function ensureTeamState(states, name) {
+        if (!states[name]) states[name] = { ...AI_INIT };
+        return states[name];
+    }
+
+    function updateTeamState(state, isWin, isDraw, isBlowout, isOT, oppStrength) {
+        if (isWin) {
+            if (oppStrength > 65) { state.strength += 4; state.motivation += 8; }
+            else if (oppStrength >= 40) { state.strength += 2; state.motivation += 5; }
+            else { state.strength += 1; state.motivation += 3; }
+        } else if (isDraw) {
+            state.strength += 0.5;
+            state.motivation += 1;
+        } else {
+            if (oppStrength > 65) { state.strength -= 1; state.motivation -= 3; }
+            else if (oppStrength >= 40) { state.strength -= 2; state.motivation -= 5; }
+            else { state.strength -= 4; state.motivation -= 8; }
+        }
+
+        if (isBlowout) {
+            if (isWin) { state.strength += 2; state.motivation += 10; state.energy += 5; }
+            else { state.strength -= 3; state.motivation -= 10; state.energy -= 10; }
+        }
+
+        state.energy -= 10;
+        if (isOT) state.energy -= 5;
+        state.energy += 3;
+
+        state.strength = Math.max(10, Math.min(100, state.strength));
+        state.energy = Math.max(0, Math.min(100, state.energy));
+        state.motivation = Math.max(0, Math.min(100, state.motivation));
+    }
+
+    function simulateTeamStates(priorMatches) {
+        const states = {};
+        validTeams.forEach(t => ensureTeamState(states, t));
+
+        priorMatches.forEach(m => {
+            const homeState = ensureTeamState(states, m.home);
+            const awayState = ensureTeamState(states, m.away);
+
+            const gf = Number(m.factHome);
+            const ga = Number(m.factAway);
+            const isOT = (m.type === 'ОТ' || m.type === 'БУЛ');
+            const isBlowout = Math.abs(gf - ga) >= 3;
+            const homeWin = gf > ga;
+            const awayWin = ga > gf;
+            const isDraw = gf === ga;
+
+            const homeOppStrength = awayState.strength;
+            const awayOppStrength = homeState.strength;
+
+            updateTeamState(homeState, homeWin, isDraw, isBlowout, isOT, homeOppStrength);
+            updateTeamState(awayState, awayWin, isDraw, isBlowout, isOT, awayOppStrength);
+        });
+
+        return states;
+    }
+
+    function computeAIPredictionForMatch(homeTeam, awayTeam, priorMatches) {
+        if (!homeTeam || !awayTeam) return { home: '', away: '' };
+
+        const states = simulateTeamStates(priorMatches);
+        const homeState = ensureTeamState(states, homeTeam);
+        const awayState = ensureTeamState(states, awayTeam);
+
+        const HOME_ADV = 0.35, AWAY_PEN = 0.92;
+        const avg = arr => arr.length === 0 ? 0 : arr.reduce((s, x) => s + x, 0) / arr.length;
+
+        const homeTeamMatches = priorMatches.filter(m => m.home === homeTeam || m.away === homeTeam).slice(-10);
+        const awayTeamMatches = priorMatches.filter(m => m.home === awayTeam || m.away === awayTeam).slice(-10);
+
+        if (homeTeamMatches.length === 0 && awayTeamMatches.length === 0) {
+            return { home: 3, away: 2 };
+        }
+
+        let leagueAvg = 2.75;
+        if (priorMatches.length > 0) {
+            const totalGoals = priorMatches.reduce((s, m) => s + Number(m.factHome) + Number(m.factAway), 0);
+            leagueAvg = totalGoals / priorMatches.length / 2;
+        }
+
+        const goalsFor = (matches, team) => matches.map(m => Number(m.home === team ? m.factHome : m.factAway));
+        const goalsAgainst = (matches, team) => matches.map(m => Number(m.home === team ? m.factAway : m.factHome));
+
+        const homeAttack  = homeTeamMatches.length > 0 ? avg(goalsFor(homeTeamMatches, homeTeam))  : leagueAvg;
+        const homeDefense = homeTeamMatches.length > 0 ? avg(goalsAgainst(homeTeamMatches, homeTeam)) : leagueAvg;
+        const awayAttack  = awayTeamMatches.length > 0 ? avg(goalsFor(awayTeamMatches, awayTeam))  : leagueAvg;
+        const awayDefense = awayTeamMatches.length > 0 ? avg(goalsAgainst(awayTeamMatches, awayTeam)) : leagueAvg;
+
+        let expHome = (homeAttack + awayDefense) / 2 + HOME_ADV;
+        let expAway = (awayAttack * AWAY_PEN + homeDefense) / 2;
+
+        const homeRating = (homeState.strength / 100) * (0.5 + 0.5 * homeState.energy / 100) * (0.7 + 0.3 * homeState.motivation / 100);
+        const awayRating = (awayState.strength / 100) * (0.5 + 0.5 * awayState.energy / 100) * (0.7 + 0.3 * awayState.motivation / 100);
+        const totalRating = homeRating + awayRating || 1;
+        const homeAdvFactor = homeRating / totalRating;
+        const awayAdvFactor = awayRating / totalRating;
+
+        const strengthMultiplier = (f) => 0.6 + 0.8 * f;
+        expHome *= strengthMultiplier(homeAdvFactor);
+        expAway *= strengthMultiplier(awayAdvFactor);
+
+        const calcForm = (matches, team) => {
+            let pts = 0;
+            matches.forEach(m => {
+                const isHome = m.home === team;
+                const gf = Number(isHome ? m.factHome : m.factAway);
+                const ga = Number(isHome ? m.factAway : m.factHome);
+                const isOT = (m.type === 'ОТ' || m.type === 'БУЛ');
+                if (gf > ga) pts += 2;
+                else if (gf < ga) pts += (isOT ? 1 : 0);
+                else pts += 1;
+            });
+            return pts;
+        };
+        const homeForm5 = calcForm(homeTeamMatches.slice(-5), homeTeam);
+        const awayForm5 = calcForm(awayTeamMatches.slice(-5), awayTeam);
+        const formDelta = (homeForm5 - awayForm5) / 10;
+        expHome += formDelta * 0.3;
+        expAway -= formDelta * 0.3;
+
+        expHome = Math.max(0.3, expHome);
+        expAway = Math.max(0.3, expAway);
+
+        const predHome = Math.max(0, Math.min(Math.round(expHome), 9));
+        const predAway = Math.max(0, Math.min(Math.round(expAway), 9));
+
+        return { home: predHome, away: predAway };
+    }
+
+    function fillAIPredictionsForPlayed() {
+        const rows = Array.from(document.querySelectorAll('#table-body .match-row'));
+        const matchData = rows.map(row => ({
+            row,
+            dateKey: parseDate(row.querySelector('.input-date').value),
+            home: normalizeTeamName(row.querySelectorAll('.input-team')[0].value),
+            away: normalizeTeamName(row.querySelectorAll('.input-team')[1].value),
+            factHome: row.querySelectorAll('.input-score')[0].value,
+            factAway: row.querySelectorAll('.input-score')[1].value,
+            type: row.querySelector('.input-type').value
+        }));
+
+        matchData.sort((a, b) => {
+            const da = a.dateKey === null ? Infinity : a.dateKey;
+            const db = b.dateKey === null ? Infinity : b.dateKey;
+            return da - db;
+        });
+
+        const priorMatches = [];
+        matchData.forEach(m => {
+            const aiH = m.row.querySelector('.pred-ai-h');
+            const aiA = m.row.querySelector('.pred-ai-a');
+            if (!aiH || !aiA) return;
+
+            const hasFact = (m.factHome !== '' && m.factAway !== '');
+
+            if (hasFact && m.home && m.away) {
+                const pred = computeAIPredictionForMatch(m.home, m.away, priorMatches);
+                aiH.value = pred.home;
+                aiA.value = pred.away;
+            }
+
+            if (hasFact && m.home && m.away && m.dateKey !== null) {
+                priorMatches.push({
+                    home: m.home, away: m.away,
+                    factHome: m.factHome, factAway: m.factAway,
+                    type: m.type
+                });
+            }
+        });
+    }
+
+    function fillAIPredictionsForTomorrow() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        const pad = n => String(n).padStart(2, '0');
+        const tomorrowStr = `${pad(tomorrow.getDate())}.${pad(tomorrow.getMonth() + 1)}.${tomorrow.getFullYear()}`;
+
+        const rows = Array.from(document.querySelectorAll('#table-body .match-row'));
+        const matchData = rows.map(row => ({
+            row,
+            dateStr: (row.querySelector('.input-date').value || '').trim(),
+            home: normalizeTeamName(row.querySelectorAll('.input-team')[0].value),
+            away: normalizeTeamName(row.querySelectorAll('.input-team')[1].value),
+            factHome: row.querySelectorAll('.input-score')[0].value,
+            factAway: row.querySelectorAll('.input-score')[1].value,
+            type: row.querySelector('.input-type').value,
+            dateKey: parseDate(row.querySelector('.input-date').value)
+        }));
+
+        const priorMatches = matchData
+            .filter(m => m.factHome !== '' && m.factAway !== '' && m.home && m.away && m.dateKey !== null)
+            .map(m => ({ home: m.home, away: m.away, factHome: m.factHome, factAway: m.factAway, type: m.type }));
+
+        matchData.forEach(m => {
+            if (m.dateStr !== tomorrowStr) return;
+            if (!m.home || !m.away) return;
+            if (m.factHome !== '' && m.factAway !== '') return;
+
+            const aiH = m.row.querySelector('.pred-ai-h');
+            const aiA = m.row.querySelector('.pred-ai-a');
+            if (!aiH || !aiA) return;
+
+            const pred = computeAIPredictionForMatch(m.home, m.away, priorMatches);
+            aiH.value = pred.home;
+            aiA.value = pred.away;
+        });
+    }
+
     function computeTomorrowAIPredictions() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -1813,41 +2094,22 @@
             const factAway = row.querySelectorAll('.input-score')[1].value;
             if (factHome !== '' && factAway !== '') return;
 
-            const homeMatches = collectTeamMatches(home).slice(-10);
-            const awayMatches = collectTeamMatches(away).slice(-10);
-            if (homeMatches.length === 0 || awayMatches.length === 0) {
-                list.push({ date: tomorrowStr, home, away, predHome: null, predAway: null, reason: 'Недостаточно данных' });
+            const aiH = row.querySelector('.pred-ai-h').value;
+            const aiA = row.querySelector('.pred-ai-a').value;
+
+            if (aiH === '' || aiA === '') {
+                list.push({ date: tomorrowStr, home, away, predHome: null, predAway: null, reason: 'Прогноз не рассчитан' });
                 return;
             }
-
-            const avg = arr => arr.length === 0 ? 0 : arr.reduce((s, x) => s + x, 0) / arr.length;
-            const homeAttack  = avg(homeMatches.map(m => m.goalsFor));
-            const homeDefense = avg(homeMatches.map(m => m.goalsAgainst));
-            const awayAttack  = avg(awayMatches.map(m => m.goalsFor));
-            const awayDefense = avg(awayMatches.map(m => m.goalsAgainst));
-
-            const HOME_ADV = 0.35, AWAY_PEN = 0.92;
-            let expHome = (homeAttack + awayDefense) / 2 + HOME_ADV;
-            let expAway = (awayAttack * AWAY_PEN + homeDefense) / 2;
-
-            const getForm = list => list.reduce((s, m) => s + m.points, 0);
-            const homeForm5 = getForm(homeMatches.slice(-5));
-            const awayForm5 = getForm(awayMatches.slice(-5));
-            const formDelta = (homeForm5 - awayForm5) / 10;
-            expHome += formDelta * 0.4;
-            expAway -= formDelta * 0.4;
-            expHome = Math.max(0.5, expHome);
-            expAway = Math.max(0.5, expAway);
-
-            let predHome = Math.max(0, Math.min(Math.round(expHome), 8));
-            let predAway = Math.max(0, Math.min(Math.round(expAway), 8));
-
-            list.push({ date: tomorrowStr, home, away, predHome, predAway, reason: '' });
+            list.push({ date: tomorrowStr, home, away, predHome: aiH, predAway: aiA, reason: '' });
         });
         return { list, date: tomorrowStr };
     }
 
     function showAIPredictions() {
+        fillAIPredictionsForTomorrow();
+        calculateAllPoints();
+
         const { list, date } = computeTomorrowAIPredictions();
         const overlay = document.getElementById('ai-info-modal-overlay');
         const dateEl = document.getElementById('ai-info-date');
@@ -1896,7 +2158,7 @@
             date: '', home: '', away: '', factHome: '', factAway: '', factType: '',
             factOsHome: '', factOsAway: '',
             denis: ['', ''], anton: ['', ''], valeriy: ['', ''],
-            ruslan: ['', ''], nastya: ['', '']
+            ruslan: ['', ''], nastya: ['', ''], ai: ['', '']
         };
         const rowData = { ...d, ...data };
         if (data.denis) rowData.denis = data.denis;
@@ -1934,6 +2196,9 @@
             <td class="bg-nastya-cell"><input type="number" class="cell-input input-score pred-nastya-h" value="${rowData.nastya[0] || ''}" oninput="handleInputChange(this)"></td>
             <td class="bg-nastya-cell"><input type="number" class="cell-input input-score pred-nastya-a" value="${rowData.nastya[1] || ''}" oninput="handleInputChange(this)"></td>
             <td class="bg-nastya-cell points-cell points-nastya"></td>
+            <td class="bg-ai-cell"><input type="number" class="cell-input input-score pred-ai-h" readonly tabindex="-1" title="Прогноз ИИ. Заполняется автоматически для сыгранных матчей, а для завтрашних — по кнопке «Прогнозы ИИ на завтра»"></td>
+            <td class="bg-ai-cell"><input type="number" class="cell-input input-score pred-ai-a" readonly tabindex="-1" title="Прогноз ИИ. Заполняется автоматически для сыгранных матчей, а для завтрашних — по кнопке «Прогнозы ИИ на завтра»"></td>
+            <td class="bg-ai-cell points-cell points-ai"></td>
             <td><button class="btn-delete-row" onclick="deleteRow(this)" title="Удалить матч">X</button></td>
         `;
     }
@@ -1987,9 +2252,11 @@
     }
 
     function calculateAllPoints() {
+        fillAIPredictionsForPlayed();
+
         const rows = document.querySelectorAll('#table-body .match-row');
-        const pList = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
-        const totals = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0 };
+        const pList = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya', 'ai'];
+        const totals = { denis: 0, anton: 0, valeriy: 0, ruslan: 0, nastya: 0, ai: 0 };
         const stats = {};
         pList.forEach(p => stats[p] = { wins: 0, total: 0 });
         rows.forEach(row => {
@@ -2106,7 +2373,7 @@
             if (selectedCells.length > 0) {
                 selectedCells.forEach(cell => {
                     const input = cell.querySelector('input, select');
-                    if (input) input.value = '';
+                    if (input && !input.readOnly) input.value = '';
                     cell.classList.remove('cell-selected');
                 });
                 calculateAllPoints(); saveData(); e.preventDefault();
