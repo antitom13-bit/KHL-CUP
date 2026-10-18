@@ -47,8 +47,11 @@
         .bg-denis { background-color: #cce0e6; } .bg-anton { background-color: #fce4d6; } .bg-valeriy { background-color: #fdf1cb; } .bg-ruslan { background-color: #e2b8b8; } .bg-nastya { background-color: #e6a8a8; }
         .bg-denis-cell { background-color: #e6f2f5; } .bg-anton-cell { background-color: #fef4ee; } .bg-valeriy-cell { background-color: #fff9e6; } .bg-ruslan-cell { background-color: #f4e1e1; } .bg-nastya-cell { background-color: #f5d6d6; }
         .bg-ai { background-color: #ddd0f0; } .bg-ai-cell { background-color: #f0ebfa; }
-        .bg-ai-cell input[readonly] { color: #5a3a8a; font-weight: bold; cursor: default; background: transparent; }
-        .bg-ai-cell input[readonly]:focus { background-color: transparent; box-shadow: none; outline: none; }
+        .bg-ai-cell input.pred-ai-h, .bg-ai-cell input.pred-ai-a { color: #5a3a8a; font-weight: bold; cursor: text; background: transparent; }
+        .bg-ai-cell input.pred-ai-h:focus, .bg-ai-cell input.pred-ai-a:focus { background-color: #fffde7; box-shadow: inset 0 0 0 2px #9C27B0; }
+        .bg-ai-cell input[data-manual="1"] { background-color: #fff3cd !important; color: #856404; box-shadow: inset 0 0 0 1px #ff9800; }
+        .bg-ai-cell input[data-manual="1"]:focus { background-color: #fffde7 !important; box-shadow: inset 0 0 0 2px #ff9800; }
+        .ai-hint { display: inline-block; font-size: 11px; color: #666; background: #ede7f6; padding: 4px 10px; border-radius: 12px; border: 1px dashed #9C27B0; }
         tr.match-row.row-archived-past, tr.match-row.row-archived-future { display: none; }
         #table-body.show-past tr.match-row.row-archived-past { display: table-row; opacity: 0.55; }
         #table-body.show-past tr.match-row.row-archived-past input, #table-body.show-past tr.match-row.row-archived-past select { color: #777; }
@@ -253,6 +256,7 @@
         .ai-info-match .ai-date { color: #888; font-size: 12px; min-width: 80px; }
         .ai-info-match .ai-teams { flex: 1; font-weight: 500; }
         .ai-info-match .ai-score { font-weight: bold; font-size: 15px; color: #9C27B0; background: #f3e5f5; padding: 3px 12px; border-radius: 4px; }
+        .ai-info-match .ai-manual-badge { font-size: 10px; color: #856404; background: #fff3cd; padding: 2px 6px; border-radius: 4px; border: 1px solid #ff9800; margin-left: 6px; }
         .ai-info-empty { text-align: center; color: #888; padding: 24px; font-style: italic; }
         .ai-info-close { display: block; width: 100%; margin-top: 16px; padding: 10px; background: #9C27B0; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
         .ai-info-close:hover { background: #7B1FA2; }
@@ -295,7 +299,7 @@
             <div class="controls">
                 <button class="btn btn-upload" onclick="document.getElementById('excel-upload').click()">📥 Загрузить прогнозы из Excel</button>
                 <input type="file" id="excel-upload" accept=".xlsx, .xls" style="display: none;" onchange="handleFileUpload(event)">
-                <button class="btn btn-ai" onclick="showAIPredictions()" title="Рассчитать прогнозы ИИ на завтрашние матчи и показать их">🤖 Прогнозы ИИ на завтра</button>
+                <button class="btn btn-ai" onclick="showAIPredictions()" title="Рассчитать прогнозы ИИ на завтрашние матчи (ручные правки не перезаписываются)">🤖 Прогнозы ИИ на завтра</button>
                 <button class="btn btn-backup" onclick="exportBackup()" title="Сохранить полный бэкап">💾 Экспорт (бэкап)</button>
                 <button class="btn btn-add" onclick="addNewRow()">+ Добавить матч</button>
                 <button class="btn btn-clear" onclick="clearAllData()">Очистить всё</button>
@@ -306,6 +310,7 @@
                     <button class="team-search-clear" id="team-search-clear" onclick="clearTeamFilter()" title="Сбросить" style="display:none;">✕</button>
                 </div>
                 <span id="team-search-counter" class="team-search-counter" style="display:none;"></span>
+                <span class="ai-hint" title="Поля ИИ (🤖) можно редактировать вручную. При ручном вводе авторасчёт для этого поля отключается. Чтобы вернуть авторасчёт — очистите поле.">✏️ ИИ можно редактировать вручную</span>
             </div>
             <div class="table-container" id="table-container">
                 <table id="predictionsTable">
@@ -321,7 +326,7 @@
                             <th colspan="3" class="bg-valeriy">Валерий<br><span id="pct-valeriy" style="font-size: 11px; color: #555;">0,0%</span></th>
                             <th colspan="3" class="bg-ruslan">Руслан<br><span id="pct-ruslan" style="font-size: 11px; color: #555;">0,0%</span></th>
                             <th colspan="3" class="bg-nastya">Настя<br><span id="pct-nastya" style="font-size: 11px; color: #555;">0,0%</span></th>
-                            <th colspan="3" class="bg-ai">🤖 ИИ<br><span id="pct-ai" style="font-size: 11px; color: #555;">0,0%</span></th>
+                            <th colspan="3" class="bg-ai">🤖 ИИ <span style="font-size:10px; font-weight:normal;">(✏️ ред.)</span><br><span id="pct-ai" style="font-size: 11px; color: #555;">0,0%</span></th>
                             <th rowspan="2" style="width: 30px;"></th>
                         </tr>
                         <tr>
@@ -1994,6 +1999,7 @@
         return { home: predHome, away: predAway };
     }
 
+    // Заполняет прогнозы ИИ ТОЛЬКО для уже сыгранных матчей и НЕ трогает поля с data-manual="1"
     function fillAIPredictionsForPlayed() {
         const rows = Array.from(document.querySelectorAll('#table-body .match-row'));
         const matchData = rows.map(row => ({
@@ -2022,8 +2028,8 @@
 
             if (hasFact && m.home && m.away) {
                 const pred = computeAIPredictionForMatch(m.home, m.away, priorMatches);
-                aiH.value = pred.home;
-                aiA.value = pred.away;
+                if (aiH.dataset.manual !== '1') aiH.value = pred.home;
+                if (aiA.dataset.manual !== '1') aiA.value = pred.away;
             }
 
             if (hasFact && m.home && m.away && m.dateKey !== null) {
@@ -2036,6 +2042,7 @@
         });
     }
 
+    // Заполняет прогнозы ИИ ТОЛЬКО для завтрашних матчей и НЕ трогает поля с data-manual="1"
     function fillAIPredictionsForTomorrow() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -2070,8 +2077,8 @@
             if (!aiH || !aiA) return;
 
             const pred = computeAIPredictionForMatch(m.home, m.away, priorMatches);
-            aiH.value = pred.home;
-            aiA.value = pred.away;
+            if (aiH.dataset.manual !== '1') aiH.value = pred.home;
+            if (aiA.dataset.manual !== '1') aiA.value = pred.away;
         });
     }
 
@@ -2096,12 +2103,14 @@
 
             const aiH = row.querySelector('.pred-ai-h').value;
             const aiA = row.querySelector('.pred-ai-a').value;
+            const isManual = row.querySelector('.pred-ai-h').dataset.manual === '1'
+                          || row.querySelector('.pred-ai-a').dataset.manual === '1';
 
             if (aiH === '' || aiA === '') {
-                list.push({ date: tomorrowStr, home, away, predHome: null, predAway: null, reason: 'Прогноз не рассчитан' });
+                list.push({ date: tomorrowStr, home, away, predHome: null, predAway: null, reason: 'Прогноз не рассчитан', manual: false });
                 return;
             }
-            list.push({ date: tomorrowStr, home, away, predHome: aiH, predAway: aiA, reason: '' });
+            list.push({ date: tomorrowStr, home, away, predHome: aiH, predAway: aiA, reason: '', manual: isManual });
         });
         return { list, date: tomorrowStr };
     }
@@ -2115,7 +2124,7 @@
         const dateEl = document.getElementById('ai-info-date');
         const content = document.getElementById('ai-info-content');
 
-        dateEl.textContent = `Прогнозы на ${date}. Найдено матчей: ${list.length}.`;
+        dateEl.textContent = `Прогнозы на ${date}. Найдено матчей: ${list.length}. (🔒 ручные прогнозы не перезаписываются)`;
 
         if (list.length === 0) {
             content.innerHTML = '<div class="ai-info-empty">На завтра нет матчей в календаре.</div>';
@@ -2128,9 +2137,10 @@
                         <span style="color:#999; font-size:12px;">${m.reason}</span>
                     </div>`;
                 }
+                const badge = m.manual ? '<span class="ai-manual-badge">✏️ ручной</span>' : '';
                 return `<div class="ai-info-match">
                     <span class="ai-date">${m.date}</span>
-                    <span class="ai-teams">${m.home} — ${m.away}</span>
+                    <span class="ai-teams">${m.home} — ${m.away}${badge}</span>
                     <span class="ai-score">${m.predHome}:${m.predAway}</span>
                 </div>`;
             }).join('');
@@ -2158,7 +2168,7 @@
             date: '', home: '', away: '', factHome: '', factAway: '', factType: '',
             factOsHome: '', factOsAway: '',
             denis: ['', ''], anton: ['', ''], valeriy: ['', ''],
-            ruslan: ['', ''], nastya: ['', ''], ai: ['', '']
+            ruslan: ['', ''], nastya: ['', '']
         };
         const rowData = { ...d, ...data };
         if (data.denis) rowData.denis = data.denis;
@@ -2166,6 +2176,10 @@
         if (data.valeriy) rowData.valeriy = data.valeriy;
         if (data.ruslan) rowData.ruslan = data.ruslan;
         if (data.nastya) rowData.nastya = data.nastya;
+
+        const aiVals = Array.isArray(data.ai) ? data.ai : ['', ''];
+        const aiManualVals = Array.isArray(data.aiManual) ? data.aiManual : [0, 0];
+
         const selType = (val) => rowData.factType === val ? 'selected' : '';
         return `
             <td><input type="text" class="cell-input input-date" placeholder="дд.мм.гггг" value="${rowData.date}" oninput="handleInputChange(this)"></td>
@@ -2196,8 +2210,8 @@
             <td class="bg-nastya-cell"><input type="number" class="cell-input input-score pred-nastya-h" value="${rowData.nastya[0] || ''}" oninput="handleInputChange(this)"></td>
             <td class="bg-nastya-cell"><input type="number" class="cell-input input-score pred-nastya-a" value="${rowData.nastya[1] || ''}" oninput="handleInputChange(this)"></td>
             <td class="bg-nastya-cell points-cell points-nastya"></td>
-            <td class="bg-ai-cell"><input type="number" class="cell-input input-score pred-ai-h" readonly tabindex="-1" title="Прогноз ИИ. Заполняется автоматически для сыгранных матчей, а для завтрашних — по кнопке «Прогнозы ИИ на завтра»"></td>
-            <td class="bg-ai-cell"><input type="number" class="cell-input input-score pred-ai-a" readonly tabindex="-1" title="Прогноз ИИ. Заполняется автоматически для сыгранных матчей, а для завтрашних — по кнопке «Прогнозы ИИ на завтра»"></td>
+            <td class="bg-ai-cell"><input type="number" class="cell-input input-score pred-ai-h" value="${aiVals[0] || ''}" ${aiManualVals[0] ? 'data-manual="1"' : ''} oninput="handleAIInputChange(this)" title="Прогноз ИИ. Можно редактировать вручную — тогда авторасчёт отключится для этого поля. Чтобы вернуть авторасчёт — очистите поле."></td>
+            <td class="bg-ai-cell"><input type="number" class="cell-input input-score pred-ai-a" value="${aiVals[1] || ''}" ${aiManualVals[1] ? 'data-manual="1"' : ''} oninput="handleAIInputChange(this)" title="Прогноз ИИ. Можно редактировать вручную — тогда авторасчёт отключится для этого поля. Чтобы вернуть авторасчёт — очистите поле."></td>
             <td class="bg-ai-cell points-cell points-ai"></td>
             <td><button class="btn-delete-row" onclick="deleteRow(this)" title="Удалить матч">X</button></td>
         `;
@@ -2241,6 +2255,17 @@
         }
         calculateAllPoints(); saveData();
         if (input.classList.contains('input-date')) { sortTableByDate(); filterRowsByDateRange(); }
+    }
+
+    // Ручное редактирование поля ИИ: помечаем как ручное, чтобы авторасчёт его не перезаписывал.
+    function handleAIInputChange(input) {
+        if (input.value === '') {
+            delete input.dataset.manual;
+        } else {
+            input.dataset.manual = '1';
+        }
+        calculateAllPoints();
+        saveData();
     }
 
     function calculateMatchPoints(factHome, factAway, predHome, predAway) {
@@ -2296,6 +2321,8 @@
         const rows = document.querySelectorAll('#table-body .match-row');
         const data = [];
         rows.forEach(row => {
+            const aiH = row.querySelector('.pred-ai-h');
+            const aiA = row.querySelector('.pred-ai-a');
             data.push({
                 date: row.querySelector('.input-date').value,
                 home: row.querySelectorAll('.input-team')[0].value,
@@ -2309,7 +2336,9 @@
                 anton: [row.querySelector('.pred-anton-h').value, row.querySelector('.pred-anton-a').value],
                 valeriy: [row.querySelector('.pred-valeriy-h').value, row.querySelector('.pred-valeriy-a').value],
                 ruslan: [row.querySelector('.pred-ruslan-h').value, row.querySelector('.pred-ruslan-a').value],
-                nastya: [row.querySelector('.pred-nastya-h').value, row.querySelector('.pred-nastya-a').value]
+                nastya: [row.querySelector('.pred-nastya-h').value, row.querySelector('.pred-nastya-a').value],
+                ai: [aiH.value, aiA.value],
+                aiManual: [aiH.dataset.manual === '1' ? 1 : 0, aiA.dataset.manual === '1' ? 1 : 0]
             });
         });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -2373,7 +2402,13 @@
             if (selectedCells.length > 0) {
                 selectedCells.forEach(cell => {
                     const input = cell.querySelector('input, select');
-                    if (input && !input.readOnly) input.value = '';
+                    if (input) {
+                        input.value = '';
+                        // Если очистили поле ИИ — снимаем флаг ручной правки
+                        if (input.classList.contains('pred-ai-h') || input.classList.contains('pred-ai-a')) {
+                            delete input.dataset.manual;
+                        }
+                    }
                     cell.classList.remove('cell-selected');
                 });
                 calculateAllPoints(); saveData(); e.preventDefault();
