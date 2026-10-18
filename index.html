@@ -32,7 +32,7 @@
         .btn-backup { background-color: #455A64; } .btn-backup:hover { background-color: #37474F; }
         .table-container { max-height: 75vh; overflow-y: auto; overflow-x: auto; background-color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 20px; position: relative; }
         table { border-collapse: collapse; width: 100%; white-space: nowrap; }
-        th, td { border: 1px solid #c0c0c0; padding: 0; text-align: center; position: relative; }
+        th, td { border: 1px solid #c0c0c0; padding: 0; text-align: center; position: relative; transition: background-color 0.15s; }
         thead th { position: sticky; top: 0; z-index: 10; background-color: #f2f2f2; font-weight: bold; padding: 6px; font-size: 12px; }
         thead tr:nth-child(2) th { top: 37px; }
         thead tr:first-child th { height: 37px; }
@@ -52,6 +52,23 @@
         .bg-ai-cell input[data-manual="1"] { background-color: #fff3cd !important; color: #856404; box-shadow: inset 0 0 0 1px #ff9800; }
         .bg-ai-cell input[data-manual="1"]:focus { background-color: #fffde7 !important; box-shadow: inset 0 0 0 2px #ff9800; }
         .ai-hint { display: inline-block; font-size: 11px; color: #666; background: #ede7f6; padding: 4px 10px; border-radius: 12px; border: 1px dashed #9C27B0; }
+        
+        /* Подсветка всей строки при фокусе на поле ввода */
+        tr.match-row.row-highlight td {
+            background-color: #e3f2fd !important; /* Нежно-голубой фон */
+            border-top: 2px solid #2196F3 !important;
+            border-bottom: 2px solid #2196F3 !important;
+        }
+        tr.match-row.row-highlight td input,
+        tr.match-row.row-highlight td select {
+            background-color: transparent !important;
+        }
+        tr.match-row.row-highlight td input:focus,
+        tr.match-row.row-highlight td select:focus {
+            background-color: #ffffff !important; /* Белый фон для активной ячейки */
+            box-shadow: inset 0 0 0 2px #2196F3;
+        }
+
         tr.match-row.row-archived-past, tr.match-row.row-archived-future { display: none; }
         #table-body.show-past tr.match-row.row-archived-past { display: table-row; opacity: 0.55; }
         #table-body.show-past tr.match-row.row-archived-past input, #table-body.show-past tr.match-row.row-archived-past select { color: #777; }
@@ -2377,6 +2394,36 @@
     let isSelecting = false;
     const tableContainer = document.getElementById('table-container');
     const table = document.getElementById('predictionsTable');
+    const tbodyElement = document.getElementById('table-body');
+
+    // --- Подсветка всей строки при фокусе на поле ввода и очистка выделения ---
+    tbodyElement.addEventListener('focusin', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+            // Убираем выделение ячеек при фокусе
+            document.querySelectorAll('td.cell-selected').forEach(cell => cell.classList.remove('cell-selected'));
+            const tr = e.target.closest('tr');
+            if (tr) tr.classList.add('row-highlight');
+        }
+    });
+
+    tbodyElement.addEventListener('focusout', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+            const tr = e.target.closest('tr');
+            if (tr) {
+                // Если фокус ушел на другой элемент этой же строки, не убираем подсветку
+                if (!e.relatedTarget || e.relatedTarget.closest('tr') !== tr) {
+                    tr.classList.remove('row-highlight');
+                }
+            }
+        }
+    });
+
+    // Убираем подсветку и выделение, если окно потеряло фокус
+    window.addEventListener('blur', () => {
+        document.querySelectorAll('td.cell-selected').forEach(cell => cell.classList.remove('cell-selected'));
+        document.querySelectorAll('tr.match-row.row-highlight').forEach(tr => tr.classList.remove('row-highlight'));
+    });
+
     table.addEventListener('mousedown', (e) => {
         const td = e.target.closest('td');
         if (!td) return;
@@ -2390,12 +2437,18 @@
         tableContainer.classList.add('selecting');
         e.preventDefault();
     });
+
     table.addEventListener('mouseover', (e) => {
         if (!isSelecting) return;
         const td = e.target.closest('td');
         if (td) td.classList.add('cell-selected');
     });
-    document.addEventListener('mouseup', () => { isSelecting = false; tableContainer.classList.remove('selecting'); });
+
+    document.addEventListener('mouseup', () => {
+        isSelecting = false;
+        tableContainer.classList.remove('selecting');
+    });
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Delete' || e.key === 'Backspace') {
             const selectedCells = document.querySelectorAll('td.cell-selected');
@@ -2415,6 +2468,7 @@
             }
         }
     });
+
     document.addEventListener('click', (e) => {
         if (!table.contains(e.target)) {
             document.querySelectorAll('td.cell-selected').forEach(cell => cell.classList.remove('cell-selected'));
