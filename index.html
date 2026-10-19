@@ -2135,6 +2135,7 @@
     function showAIPredictions() {
         fillAIPredictionsForTomorrow();
         calculateAllPoints();
+        saveData(); // <--- ВАЖНО: сохраняем сгенерированные прогнозы в localStorage
 
         const { list, date } = computeTomorrowAIPredictions();
         const overlay = document.getElementById('ai-info-modal-overlay');
@@ -2399,7 +2400,6 @@
     // --- Подсветка всей строки при фокусе на поле ввода и очистка выделения ---
     tbodyElement.addEventListener('focusin', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
-            // Убираем выделение ячеек при фокусе
             document.querySelectorAll('td.cell-selected').forEach(cell => cell.classList.remove('cell-selected'));
             const tr = e.target.closest('tr');
             if (tr) tr.classList.add('row-highlight');
@@ -2410,7 +2410,6 @@
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
             const tr = e.target.closest('tr');
             if (tr) {
-                // Если фокус ушел на другой элемент этой же строки, не убираем подсветку
                 if (!e.relatedTarget || e.relatedTarget.closest('tr') !== tr) {
                     tr.classList.remove('row-highlight');
                 }
@@ -2457,7 +2456,6 @@
                     const input = cell.querySelector('input, select');
                     if (input) {
                         input.value = '';
-                        // Если очистили поле ИИ — снимаем флаг ручной правки
                         if (input.classList.contains('pred-ai-h') || input.classList.contains('pred-ai-a')) {
                             delete input.dataset.manual;
                         }
