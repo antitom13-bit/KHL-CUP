@@ -557,81 +557,21 @@
     ];
 
     const teamAliases = {
-    'хк динамо-москва': 'ХК Динамо-Москва',
-    'динамо москва': 'ХК Динамо-Москва',
-    'динамо-москва': 'ХК Динамо-Москва',
-    'дynamo москва': 'ХК Динамо-Москва',
-    'белые медведи': 'ХК Динамо-Москва',
-    'динамо мн': 'Динамо-Минск',
-    'динамо-минск': 'Динамо-Минск',
-    'дynamo минск': 'Динамо-Минск',
-    'металлург мг': 'Металлург',
-    'металлург магнитогорск': 'Металлург',
-    'хк сочи': 'Сочи',
-    'сочи': 'Сочи',
-    'ак bars': 'Ак Барс',
-    'ак-барс': 'Ак Барс',
-    'куньлунь ред стар': 'Драконы',
-    'куньлунь рс': 'Драконы',
-    'куньлунь': 'Драконы',
-    'драконы': 'Драконы',
-    'трактор': 'Трактор',
-    'трактор челябинск': 'Трактор',
-    'сибирь': 'Сибирь',
-    'сибирь новосибирск': 'Сибирь',
-    'авангард': 'Авангард',
-    'авангард омск': 'Авангард',
-    'автомобилист': 'Автомобилист',
-    'автомобилист екатеринбург': 'Автомобилист',
-    'адмирал': 'Адмирал',
-    'адмирал владивосток': 'Адмирал',
-    'амур': 'Амур',
-    'амур хабаровск': 'Амур',
-    'барыс': 'Барыс',
-    'барыс астана': 'Барыс',
-    'салават юлаев': 'Салават Юлаев',
-    'салават юлаев уфа': 'Салават Юлаев',
-    'нефтехимик': 'Нефтехимик',
-    'нефтехимик нижнекамск': 'Нефтехимик',
-    'лада': 'Лада',
-    'лада тольятти': 'Лада',
-    'локомотив': 'Локомотив',
-    'локомотив ярославль': 'Локомотив',
-    'северсталь': 'Северсталь',
-    'северсталь череповец': 'Северсталь',
-    'ска': 'СКА',
-    'ска санкт-петербург': 'СКА',
-    'спартак': 'Спартак',
-    'спартак москва': 'Спартак',
-    'торпедо': 'Торпедо',
-    'торпедо нижегород': 'Торпедо',
-    'торпедо нижний новгород': 'Торпедо',
-    'цска': 'ЦСКА',
-    'цска москва': 'ЦСКА'
-};
-
-function normalizeTeamName(name) {
-    if (name === null || name === undefined) return '';
-    let trimmed = String(name).trim();
-    // Убираем лишние пробелы
-    trimmed = trimmed.replace(/\s+/g, ' ');
-    const lower = trimmed.toLowerCase();
-    // Прямое совпадение с валидными названиями (регистронезависимо)
-    for (const valid of validTeams) {
-        if (valid.toLowerCase() === lower) return valid;
-    }
-    // Поиск в алиасах
-    if (teamAliases[lower]) return teamAliases[lower];
-    // Частичное совпадение: если введённое содержит часть валидного или наоборот
-    for (const valid of validTeams) {
-        const vLower = valid.toLowerCase();
-        if (lower.includes(vLower) || vLower.includes(lower)) {
-            if (lower.length >= 3 && vLower.length >= 3) return valid;
-        }
-    }
-    // Возвращаем исходное (с заглавной первой буквы для единообразия)
-    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-}
+        'ХК Динамо-москва': 'ХК Динамо-Москва',
+        'ХК динамо-москва': 'ХК Динамо-Москва',
+        'хк динамо-москва': 'ХК Динамо-Москва',
+        'Динамо Мн': 'Динамо-Минск',
+        'динамо мн': 'Динамо-Минск',
+        'Металлург Мг': 'Металлург',
+        'металлург мг': 'Металлург',
+        'ХК Сочи': 'Сочи',
+        'хк сочи': 'Сочи',
+        'Ак Bars': 'Ак Барс',
+        'ак bars': 'Ак Барс',
+        'Куньлунь Ред Стар': 'Драконы',
+        'Куньлунь РС': 'Драконы',
+        'Куньлунь': 'Драконы'
+    };
     function normalizeTeamName(name) {
         if (name === null || name === undefined) return '';
         const trimmed = String(name).trim();
@@ -1767,214 +1707,180 @@ function normalizeTeamName(name) {
         });
         return pairs;
     }
-// Собирает существующие матчи в Map: ключ = date|home|away
-function collectExistingMatchesMap() {
-    const map = new Map();
-    document.querySelectorAll('#table-body .match-row').forEach(row => {
-        const date = (row.querySelector('.input-date').value || '').trim();
-        const home = normalizeTeamName(row.querySelectorAll('.input-team')[0].value);
-        const away = normalizeTeamName(row.querySelectorAll('.input-team')[1].value);
-        if (date && home && away) {
-            map.set(date + '|' + home + '|' + away, row);
-        }
-    });
-    return map;
-}
 
-// Собирает данные строки в объект
-function collectRowData(row) {
-    const aiH = row.querySelector('.pred-ai-h');
-    const aiA = row.querySelector('.pred-ai-a');
-    return {
-        date: row.querySelector('.input-date').value,
-        home: row.querySelectorAll('.input-team')[0].value,
-        away: row.querySelectorAll('.input-team')[1].value,
-        factHome: row.querySelectorAll('.input-score')[0].value,
-        factAway: row.querySelectorAll('.input-score')[1].value,
-        factType: row.querySelector('.input-type').value,
-        factOsHome: row.querySelector('.fact-os-home').value,
-        factOsAway: row.querySelector('.fact-os-away').value,
-        denis: [row.querySelector('.pred-denis-h').value, row.querySelector('.pred-denis-a').value],
-        anton: [row.querySelector('.pred-anton-h').value, row.querySelector('.pred-anton-a').value],
-        valeriy: [row.querySelector('.pred-valeriy-h').value, row.querySelector('.pred-valeriy-a').value],
-        ruslan: [row.querySelector('.pred-ruslan-h').value, row.querySelector('.pred-ruslan-a').value],
-        nastya: [row.querySelector('.pred-nastya-h').value, row.querySelector('.pred-nastya-a').value],
-        ai: [aiH.value, aiA.value],
-        aiManual: [aiH.dataset.manual === '1' ? 1 : 0, aiA.dataset.manual === '1' ? 1 : 0]
-    };
-}
-
-// Сравнивает две записи, возвращает список различий
-function diffRows(oldData, newData) {
-    const diffs = [];
-    const fields = [
-        { key: 'factHome', label: 'Факт хоз' },
-        { key: 'factAway', label: 'Факт гост' },
-        { key: 'factType', label: 'Тип' },
-        { key: 'factOsHome', label: 'ОС хоз' },
-        { key: 'factOsAway', label: 'ОС гост' },
-        { key: 'denis', label: 'Денис', pair: true },
-        { key: 'anton', label: 'Антон', pair: true },
-        { key: 'valeriy', label: 'Валерий', pair: true },
-        { key: 'ruslan', label: 'Руслан', pair: true },
-        { key: 'nastya', label: 'Настя', pair: true },
-        { key: 'ai', label: 'ИИ', pair: true }
-    ];
-    fields.forEach(f => {
-        if (f.pair) {
-            const ov = (oldData[f.key] || ['', '']);
-            const nv = (newData[f.key] || ['', '']);
-            if (String(ov[0]) !== String(nv[0]) || String(ov[1]) !== String(nv[1])) {
-                diffs.push({ field: f.label, old: `${ov[0] || '—'}:${ov[1] || '—'}`, new: `${nv[0] || '—'}:${nv[1] || '—'}` });
-            }
-        } else {
-            const ov = String(oldData[f.key] ?? '');
-            const nv = String(newData[f.key] ?? '');
-            if (ov !== nv) {
-                diffs.push({ field: f.label, old: ov || '—', new: nv || '—' });
-            }
-        }
-    });
-    return diffs;
-}
     function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array', cellDates: true});
-            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            const json = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false, defval: '', dateNF: 'dd.mm.yyyy'});
-            if (json.length < 3) { alert('Файл пуст.'); return; }
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false, defval: '', dateNF: 'dd.mm.yyyy'});
+                if (json.length < 3) { alert('Файл пуст.'); return; }
 
-            let headerIdx = -1;
-            for (let i = 0; i < Math.min(6, json.length); i++) {
-                if (json[i] && json[i].some(c => String(c).toLowerCase().includes('дата'))) {
-                    headerIdx = i; break;
-                }
-            }
-            if (headerIdx === -1) { alert('Не найдена строка с "Дата матча"'); return; }
-
-            const headerRow = json[headerIdx];
-            const COLS = {};
-            let factHomeCount = 0, factAwayCount = 0;
-            headerRow.forEach((raw, i) => {
-                const t = String(raw || '').trim().toLowerCase();
-                if (!t) return;
-                if (t.includes('дата') && COLS.date === undefined) { COLS.date = i; return; }
-                if ((t === 'хозяева' || t.startsWith('хозяев')) && !t.includes('факт') && !t.includes('голы') && COLS.home === undefined) { COLS.home = i; return; }
-                if ((t === 'гости' || t.startsWith('гост')) && !t.includes('факт') && !t.includes('голы') && COLS.away === undefined) { COLS.away = i; return; }
-                if (t.includes('факт') && t.includes('хозяев')) {
-                    factHomeCount++;
-                    if (factHomeCount === 1) COLS.factHome = i;
-                    else if (factHomeCount === 2) COLS.factOsHome = i;
-                    return;
-                }
-                if (t.includes('факт') && t.includes('гост')) {
-                    factAwayCount++;
-                    if (factAwayCount === 1) COLS.factAway = i;
-                    else if (factAwayCount === 2) COLS.factOsAway = i;
-                    return;
-                }
-            });
-
-            const pairs = detectGoalPairs(headerRow);
-            const playerList = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
-            playerList.forEach((p, idx) => { if (pairs[idx]) COLS[p] = pairs[idx]; });
-            if (COLS.factAway !== undefined) COLS.type = COLS.factAway + 1;
-
-            if (COLS.date === undefined || COLS.home === undefined || COLS.away === undefined) {
-                alert('Не удалось найти колонки Дата/Хозяева/Гости в шапке.');
-                return;
-            }
-
-            const get = (r, i) => {
-                if (i === undefined) return '';
-                const v = r[i];
-                return (v === undefined || v === null) ? '' : String(v).trim();
-            };
-            const getPair = (r, pair) => pair ? [get(r, pair[0]), get(r, pair[1])] : ['', ''];
-
-            const existingMap = collectExistingMatchesMap();
-            const predKeys = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
-            const toAdd = [];      // новые строки (данные)
-            const toUpdate = [];   // обновления: { row, newData, diffs }
-            let skipped = 0;
-
-            for (let i = headerIdx + 1; i < json.length; i++) {
-                const r = json[i];
-                if (!r || r.length < 3) { skipped++; continue; }
-
-                const rawDate = r[COLS.date], rawHome = r[COLS.home], rawAway = r[COLS.away];
-                if ((rawDate === undefined || rawDate === null || String(rawDate).trim() === '') &&
-                    (rawHome === undefined || rawHome === null || String(rawHome).trim() === '') &&
-                    (rawAway === undefined || rawAway === null || String(rawAway).trim() === '')) { skipped++; continue; }
-
-                const date = parseAnyDateToDdMmYyyy(rawDate);
-                const home = normalizeTeamName(rawHome);
-                const away = normalizeTeamName(rawAway);
-                if (!date || !home || !away) { skipped++; continue; }
-
-                const newData = {
-                    date, home, away,
-                    factHome: get(r, COLS.factHome),
-                    factAway: get(r, COLS.factAway),
-                    factType: get(r, COLS.type),
-                    factOsHome: get(r, COLS.factOsHome),
-                    factOsAway: get(r, COLS.factOsAway)
-                };
-                predKeys.forEach(p => { newData[p] = getPair(r, COLS[p]); });
-
-                const key = date + '|' + home + '|' + away;
-                if (existingMap.has(key)) {
-                    const row = existingMap.get(key);
-                    const oldData = collectRowData(row);
-                    const diffs = diffRows(oldData, newData);
-                    if (diffs.length > 0) {
-                        toUpdate.push({ row, newData, diffs });
+                let headerIdx = -1;
+                for (let i = 0; i < Math.min(6, json.length); i++) {
+                    if (json[i] && json[i].some(c => String(c).toLowerCase().includes('дата'))) {
+                        headerIdx = i; break;
                     }
-                    // если diffs пуст — ничего не меняем
-                } else {
-                    toAdd.push(newData);
                 }
-            }
+                if (headerIdx === -1) { alert('Не найдена строка с "Дата матча"'); return; }
 
-            // Применяем новые строки сразу
-            const tbody = document.getElementById('table-body');
-            toAdd.forEach(rowData => {
-                const tr = document.createElement('tr');
-                tr.className = 'match-row';
-                tr.innerHTML = createRowHTML(rowData);
-                tbody.appendChild(tr);
-            });
+                const headerRow = json[headerIdx];
+                const COLS = {};
+                let factHomeCount = 0, factAwayCount = 0;
+                headerRow.forEach((raw, i) => {
+                    const t = String(raw || '').trim().toLowerCase();
+                    if (!t) return;
+                    if (t.includes('дата') && COLS.date === undefined) { COLS.date = i; return; }
+                    if ((t === 'хозяева' || t.startsWith('хозяев')) && !t.includes('факт') && !t.includes('голы') && COLS.home === undefined) { COLS.home = i; return; }
+                    if ((t === 'гости' || t.startsWith('гост')) && !t.includes('факт') && !t.includes('голы') && COLS.away === undefined) { COLS.away = i; return; }
+                    if (t.includes('факт') && t.includes('хозяев')) {
+                        factHomeCount++;
+                        if (factHomeCount === 1) COLS.factHome = i;
+                        else if (factHomeCount === 2) COLS.factOsHome = i;
+                        return;
+                    }
+                    if (t.includes('факт') && t.includes('гост')) {
+                        factAwayCount++;
+                        if (factAwayCount === 1) COLS.factAway = i;
+                        else if (factAwayCount === 2) COLS.factOsAway = i;
+                        return;
+                    }
+                });
 
-            const finalize = () => {
+                const pairs = detectGoalPairs(headerRow);
+                const playerList = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
+                playerList.forEach((p, idx) => { if (pairs[idx]) COLS[p] = pairs[idx]; });
+                if (COLS.factAway !== undefined) COLS.type = COLS.factAway + 1;
+
+                if (COLS.date === undefined || COLS.home === undefined || COLS.away === undefined) {
+                    alert('Не удалось найти колонки Дата/Хозяева/Гости в шапке.');
+                    return;
+                }
+
+                const get = (r, i) => {
+                    if (i === undefined) return '';
+                    const v = r[i];
+                    return (v === undefined || v === null) ? '' : String(v).trim();
+                };
+                const getPair = (r, pair) => pair ? [get(r, pair[0]), get(r, pair[1])] : ['', ''];
+
+                const tbody = document.getElementById('table-body');
+                const existingRows = new Map();
+                tbody.querySelectorAll('.match-row').forEach(row => {
+                    const dt = (row.querySelector('.input-date').value || '').trim();
+                    const h = normalizeTeamName(row.querySelectorAll('.input-team')[0].value);
+                    const a = normalizeTeamName(row.querySelectorAll('.input-team')[1].value);
+                    if (dt || h || a) existingRows.set(dt + '|' + h + '|' + a, row);
+                });
+
+                const predKeys = ['denis', 'anton', 'valeriy', 'ruslan', 'nastya'];
+                let addedCount = 0, updatedCount = 0, skippedCount = 0;
+
+                for (let i = headerIdx + 1; i < json.length; i++) {
+                    const r = json[i];
+                    if (!r || r.length < 3) { skippedCount++; continue; }
+
+                    const rawDate = r[COLS.date];
+                    const rawHome = r[COLS.home];
+                    const rawAway = r[COLS.away];
+
+                    if ((rawDate === undefined || rawDate === null || String(rawDate).trim() === '') &&
+                        (rawHome === undefined || rawHome === null || String(rawHome).trim() === '') &&
+                        (rawAway === undefined || rawAway === null || String(rawAway).trim() === '')) {
+                        skippedCount++; continue;
+                    }
+
+                    const date = parseAnyDateToDdMmYyyy(rawDate);
+                    const home = normalizeTeamName(rawHome);
+                    const away = normalizeTeamName(rawAway);
+
+                    if (!date || !home || !away) { skippedCount++; continue; }
+
+                    const newData = {
+                        date, home, away,
+                        factHome:   get(r, COLS.factHome),
+                        factAway:   get(r, COLS.factAway),
+                        type:       get(r, COLS.type),
+                        factOsHome: get(r, COLS.factOsHome),
+                        factOsAway: get(r, COLS.factOsAway)
+                    };
+                    predKeys.forEach(p => { newData[p] = getPair(r, COLS[p]); });
+
+                    const key = date + '|' + home + '|' + away;
+
+                    if (existingRows.has(key)) {
+                        const row = existingRows.get(key);
+                        let changed = false;
+                        const setVal = (selector, val) => {
+                            if (val === undefined || val === null || val === '') return;
+                            const el = row.querySelector(selector);
+                            if (el && el.value !== val) { el.value = val; changed = true; }
+                        };
+                        setVal('.input-date', date);
+                        const teamInputs = row.querySelectorAll('.input-team');
+                        if (teamInputs.length >= 2) {
+                            if (home !== '' && teamInputs[0].value !== home) { teamInputs[0].value = home; changed = true; }
+                            if (away !== '' && teamInputs[1].value !== away) { teamInputs[1].value = away; changed = true; }
+                        }
+                        const scoreInputs = row.querySelectorAll('.input-score');
+                        if (scoreInputs.length >= 2) {
+                            if (newData.factHome !== '' && scoreInputs[0].value !== newData.factHome) { scoreInputs[0].value = newData.factHome; changed = true; }
+                            if (newData.factAway !== '' && scoreInputs[1].value !== newData.factAway) { scoreInputs[1].value = newData.factAway; changed = true; }
+                        }
+                        if (newData.type !== '') {
+                            const typeSel = row.querySelector('.input-type');
+                            if (typeSel && typeSel.value !== newData.type) { typeSel.value = newData.type; changed = true; }
+                        }
+                        setVal('.fact-os-home', newData.factOsHome);
+                        setVal('.fact-os-away', newData.factOsAway);
+                        predKeys.forEach(p => {
+                            if (newData[p]) {
+                                setVal(`.pred-${p}-h`, newData[p][0]);
+                                setVal(`.pred-${p}-a`, newData[p][1]);
+                            }
+                        });
+                        if (changed) updatedCount++;
+                    } else {
+                        const rowData = {
+                            date, home, away,
+                            factHome: newData.factHome, factAway: newData.factAway,
+                            factType: newData.type, factOsHome: newData.factOsHome, factOsAway: newData.factOsAway,
+                            denis: newData.denis, anton: newData.anton, valeriy: newData.valeriy,
+                            ruslan: newData.ruslan, nastya: newData.nastya
+                        };
+                        const tr = document.createElement('tr');
+                        tr.className = 'match-row';
+                        tr.innerHTML = createRowHTML(rowData);
+                        tbody.appendChild(tr);
+                        existingRows.set(key, tr);
+                        addedCount++;
+                    }
+                }
+
                 sortTableByDate();
                 calculateAllPoints();
                 saveData();
                 filterRowsByDateRange();
-            };
 
-            // Если есть конфликты — показываем модальное окно подтверждения
-            if (toUpdate.length > 0) {
-                showUpdateConfirmModal(toUpdate, finalize);
-            } else {
-                finalize();
-                let msg = `📊 Загрузка завершена.\n\n➕ Добавлено новых: ${toAdd.length}\n`;
-                if (skipped > 0) msg += `⚠️ Пропущено: ${skipped}\n`;
-                if (toAdd.length === 0) msg += `\nℹ️ Изменений нет.`;
+                let msg = `📊 Загрузка завершена.\n\n`;
+                msg += `➕ Добавлено новых матчей: ${addedCount}\n`;
+                msg += `🔄 Обновлено (прогнозы/результаты): ${updatedCount}\n`;
+                if (skippedCount > 0) msg += `⚠️ Пропущено пустых строк: ${skippedCount}\n`;
+                if (addedCount === 0 && updatedCount === 0) msg += `\nℹ️ Изменений нет — данные совпадают.`;
+
                 alert(msg);
+            } catch (error) {
+                console.error(error);
+                alert('Ошибка при чтении файла: ' + error.message);
             }
-        } catch (error) {
-            console.error(error);
-            alert('Ошибка при чтении файла: ' + error.message);
-        }
-    };
-    reader.readAsArrayBuffer(file);
-    event.target.value = '';
-}
+        };
+        reader.readAsArrayBuffer(file);
+        event.target.value = '';
+    }
 
     // ======== ИИ-ПРОГНОЗИСТ: МОДЕЛЬ СИЛЫ, ЭНЕРГИИ И МОТИВАЦИИ ========
     const AI_INIT = { strength: 50, energy: 100, motivation: 50 };
@@ -2573,101 +2479,5 @@ function diffRows(oldData, newData) {
         renderPlayoffTable();
     };
 </script>
-    <div class="ai-info-modal-overlay" id="update-confirm-overlay">
-    <div class="ai-info-modal" style="max-width: 900px;">
-        <h3>⚠️ Обнаружены изменения в существующих матчах</h3>
-        <div class="ai-info-sub">Проверьте различия и подтвердите обновление. Отклонённые записи останутся без изменений.</div>
-        <div id="update-confirm-content" style="max-height: 55vh; overflow-y: auto;"></div>
-        <div style="display: flex; gap: 10px; margin-top: 16px;">
-            <button class="ai-info-close" style="background:#4CAF50; flex:1;" onclick="confirmUpdates(true)">✅ Применить все</button>
-            <button class="ai-info-close" style="background:#f44336; flex:1;" onclick="confirmUpdates(false)">❌ Отклонить все</button>
-        </div>
-        <button class="ai-info-close" style="background:#455A64; margin-top:8px;" onclick="closeUpdateConfirm()">Закрыть без изменений</button>
-    </div>
-</div>
-    let pendingUpdates = [];
-
-function showUpdateConfirmModal(updates, onDone) {
-    pendingUpdates = updates.map(u => ({ ...u, apply: true }));
-    window._updateConfirmCallback = onDone;
-    const content = document.getElementById('update-confirm-content');
-    content.innerHTML = pendingUpdates.map((u, idx) => {
-        const rowsHtml = u.diffs.map(d =>
-            `<div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px dashed #eee; font-size:12px;">
-                <span style="color:#666; min-width:110px;">${d.field}</span>
-                <span style="color:#c0392b; text-decoration:line-through; margin:0 8px;">${d.old}</span>
-                <span style="color:#27ae60; font-weight:bold;">${d.new}</span>
-            </div>`
-        ).join('');
-        const nd = u.newData;
-        return `<div style="border:1px solid #e0e0e0; border-radius:6px; padding:12px; margin-bottom:10px;">
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                <input type="checkbox" class="update-checkbox" data-idx="${idx}" checked onchange="togglePendingUpdate(${idx}, this.checked)">
-                <b>${nd.date} — ${nd.home} vs ${nd.away}</b>
-            </div>
-            ${rowsHtml}
-        </div>`;
-    }).join('');
-    document.getElementById('update-confirm-overlay').classList.add('active');
-}
-
-function togglePendingUpdate(idx, checked) {
-    pendingUpdates[idx].apply = checked;
-}
-
-function closeUpdateConfirm() {
-    document.getElementById('update-confirm-overlay').classList.remove('active');
-    pendingUpdates = [];
-    window._updateConfirmCallback = null;
-}
-
-function confirmUpdates(applyAll) {
-    const updates = applyAll ? pendingUpdates : pendingUpdates.filter(u => u.apply);
-    let applied = 0, rejected = 0;
-    updates.forEach(u => {
-        const setVal = (selector, val) => {
-            if (val === undefined || val === null) return;
-            const el = u.row.querySelector(selector);
-            if (el) el.value = val;
-        };
-        setVal('.input-date', u.newData.date);
-        const teamInputs = u.row.querySelectorAll('.input-team');
-        if (teamInputs.length >= 2) {
-            teamInputs[0].value = u.newData.home;
-            teamInputs[1].value = u.newData.away;
-        }
-        const scoreInputs = u.row.querySelectorAll('.input-score');
-        if (scoreInputs.length >= 2) {
-            scoreInputs[0].value = u.newData.factHome;
-            scoreInputs[1].value = u.newData.factAway;
-        }
-        setVal('.input-type', u.newData.factType);
-        setVal('.fact-os-home', u.newData.factOsHome);
-        setVal('.fact-os-away', u.newData.factOsAway);
-        ['denis','anton','valeriy','ruslan','nastya'].forEach(p => {
-            if (u.newData[p]) {
-                setVal(`.pred-${p}-h`, u.newData[p][0]);
-                setVal(`.pred-${p}-a`, u.newData[p][1]);
-            }
-        });
-        applied++;
-    });
-    rejected = pendingUpdates.length - applied;
-    const cb = window._updateConfirmCallback;
-    closeUpdateConfirm();
-    if (cb) cb();
-    alert(`✅ Применено обновлений: ${applied}\n❌ Отклонено: ${rejected}`);
-}
-
-document.addEventListener('click', (e) => {
-    const overlay = document.getElementById('update-confirm-overlay');
-    if (overlay && e.target === overlay) closeUpdateConfirm();
-});
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        const o = document.getElementById('update-confirm-overlay');
-        if (o && o.classList.contains('active')) closeUpdateConfirm();
-    }
-});
 </body>
 </html>
